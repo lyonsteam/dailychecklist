@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold:   #f9c25a;
+    --goldd:  #e8a832;
+    --black:  #0d0d0d;
+    --border: 3px solid #0d0d0d;
+    --urgent: #cc0000;
+  }
+  html, body {
+    height: 100%; background: var(--gold);
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--black); overflow: hidden;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    height: 100vh;
+    border: var(--border);
+  }
+  .left-col  { display: grid; grid-template-rows: 1fr auto; border-right: var(--border); }
+  .right-col { display: grid; grid-template-rows: 1fr 1fr 1fr; }
+
+  /* ── PANELS ── */
+  .today-panel { padding: 18px 20px 14px; overflow-y: auto; border-bottom: var(--border); }
+  .day-panel   { padding: 14px 16px 10px; border-bottom: var(--border); overflow-y: auto; }
+  .day-panel:last-child { border-bottom: none; }
+
+  .panel-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 38px; line-height: 1;
+    color: var(--black); margin-bottom: 16px; text-transform: uppercase;
+  }
+  .panel-title.sm { font-size: 22px; margin-bottom: 10px; }
+
+  /* ── ITEMS ── */
+  .item-row {
+    display: flex; align-items: flex-start; gap: 9px;
+    margin-bottom: 3px; padding: 5px 6px; border-radius: 3px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+    user-select: none;
+  }
+  .item-row:hover {
+    transform: scale(1.025);
+    background: rgba(0,0,0,0.06);
+  }
+
+  .item-row input[type="checkbox"] {
+    appearance: none;
+    width: 17px; height: 17px; min-width: 17px;
+    border: 2.5px solid var(--black);
+    background: transparent; cursor: pointer;
+    margin-top: 2px; position: relative; flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .item-row input[type="checkbox"]:checked { background: var(--black); }
+  .item-row input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute; left: 3px; top: 0;
+    width: 5px; height: 9px;
+    border: 2px solid var(--gold);
+    border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .item-row input[type="checkbox"]:disabled { opacity: 0.35; cursor: default; }
+
+  .item-label-wrap { display: flex; flex-direction: column; }
+  .item-text  { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .item-text.done { text-decoration: line-through; opacity: 0.35; }
+  .item-time  { font-size: 10px; opacity: 0.38; margin-top: 2px; }
+
+  /* countdown pill shown after checking */
+  .archive-countdown {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(0,0,0,0.08); border: 1.5px solid rgba(0,0,0,0.2);
+    padding: 1px 6px; margin-left: 8px; vertical-align: middle;
+    border-radius: 2px;
+  }
+
+  .urgent-tag {
+    display: inline-block; font-size: 8px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--urgent); border: 1.5px solid var(--urgent);
+    padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+  }
+
+  .empty-note { font-size: 11px; opacity: 0.28; font-weight: 500; padding: 3px 0; }
+
+  /* ── ARCHIVE BTN ── */
+  .archive-btn {
+    background: var(--black); color: var(--gold); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 26px;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 18px 20px; cursor: pointer;
+    text-align: left; width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: letter-spacing 0.15s ease, background 0.15s ease;
+  }
+  .archive-btn:hover { letter-spacing: 3px; background: #1a1a1a; }
+  .archive-btn span { font-size: 18px; opacity: 0.55; transition: transform 0.15s ease; }
+  .archive-btn:hover span { transform: translateX(4px); }
+
+  /* ── ADD BAR ── */
+  .add-bar {
+    grid-column: 1 / -1;
+    background: var(--black); color: var(--gold);
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase;
+    padding: 14px 20px; cursor: pointer; border: none; width: 100%;
+    text-align: center; border-top: var(--border);
+    transition: background 0.15s ease, transform 0.18s ease, padding-bottom 0.18s ease;
+    position: relative; z-index: 1;
+  }
+  .add-bar:hover {
+    background: #1f1f1f;
+    transform: translateY(-4px);
+    padding-bottom: 18px;
+    box-shadow: 0 -4px 0 0 rgba(0,0,0,0.5);
+  }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,13,13,0.84);
+    z-index: 100; display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+
+  .overlay-sheet {
+    width: 100%; background: var(--gold);
+    border-top: 4px solid var(--black);
+    padding: 26px 28px 32px;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .overlay.open .overlay-sheet { transform: translateY(0); }
+
+  .overlay-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .overlay-title { font-family: 'Black Han Sans', sans-serif; font-size: 24px; text-transform: uppercase; }
+  .overlay-close {
+    background: var(--black); color: var(--gold); border: none;
+    width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: monospace;
+    transition: transform 0.15s ease, opacity 0.15s;
+  }
+  .overlay-close:hover { transform: rotate(90deg); opacity: 0.8; }
+
+  .input-row { display: flex; border: 2.5px solid var(--black); }
+  .task-input {
+    flex: 1; background: var(--gold); border: none; outline: none;
+    font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 500;
+    padding: 12px 14px; color: var(--black);
+  }
+  .task-input::placeholder { opacity: 0.38; }
+
+  .task-add-btn {
+    background: var(--black); color: var(--gold); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0 20px; cursor: pointer;
+    transition: opacity 0.12s ease, letter-spacing 0.12s ease;
+  }
+  .task-add-btn:hover { opacity: 0.8; letter-spacing: 0.18em; }
+
+  .queue-list { margin-top: 12px; max-height: 150px; overflow-y: auto; }
+
+  .queue-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border: 2px solid var(--black); margin-bottom: 4px;
+    font-size: 13px; font-weight: 500;
+    transition: transform 0.12s ease;
+  }
+  .queue-item:hover { transform: scale(1.01); background: rgba(0,0,0,0.04); }
+
+  .queue-remove {
+    background: none; border: none; color: var(--black);
+    font-size: 16px; cursor: pointer; opacity: 0.38; padding: 0 4px;
+    transition: opacity 0.12s, color 0.12s;
+  }
+  .queue-remove:hover { opacity: 1; color: var(--urgent); }
+
+  .submit-btn {
+    width: 100%; margin-top: 10px;
+    background: var(--black); color: var(--gold); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 15px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 13px; cursor: pointer; display: none;
+    transition: opacity 0.15s, letter-spacing 0.15s;
+  }
+  .submit-btn:hover { opacity: 0.85; letter-spacing: 0.22em; }
+
+  /* ── ARCHIVE SCREEN ── */
+  .archive-screen {
+    position: fixed; inset: 0; background: var(--gold);
+    z-index: 200; display: flex; flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .archive-screen.open { transform: translateX(0); }
+
+  .archive-top {
+    background: var(--black); color: var(--gold);
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: var(--border); flex-shrink: 0;
+  }
+  .archive-top-title { font-family: 'Black Han Sans', sans-serif; font-size: 26px; text-transform: uppercase; }
+  .archive-back-btn {
+    background: var(--gold); color: var(--black); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px;
+    cursor: pointer; transition: background 0.15s, transform 0.15s;
+  }
+  .archive-back-btn:hover { background: #fbe099; transform: translateX(-3px); }
+
+  .archive-tabs-bar { display: flex; border-bottom: var(--border); flex-shrink: 0; }
+  .a-tab {
+    flex: 1; background: none; border: none; border-right: 2.5px solid var(--black);
+    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 11px; cursor: pointer; color: var(--black); opacity: 0.38;
+    transition: opacity 0.12s, background 0.12s;
+  }
+  .a-tab:last-child { border-right: none; }
+  .a-tab:hover { opacity: 0.65; }
+  .a-tab.active { opacity: 1; background: rgba(0,0,0,0.07); }
+
+  .archive-body { flex: 1; overflow-y: auto; padding: 20px 24px 60px; }
+  .a-section { display: none; }
+  .a-section.active { display: block; }
+
+  .a-year  { font-family: 'Black Han Sans', sans-serif; font-size: 30px; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 5px; margin: 6px 0 14px; }
+  .a-month { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.42; margin: 14px 0 7px; }
+
+  .a-day-block { border: 2.5px solid var(--black); margin-bottom: 7px; }
+  .a-day-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; cursor: pointer; background: rgba(0,0,0,0.05);
+    border-bottom: 2px solid transparent;
+    transition: background 0.1s;
+  }
+  .a-day-head:hover { background: rgba(0,0,0,0.1); }
+  .a-day-head.is-open { border-bottom-color: var(--black); }
+  .a-day-name { font-family: 'Black Han Sans', sans-serif; font-size: 14px; text-transform: uppercase; }
+  .a-day-meta { font-size: 10px; font-weight: 700; opacity: 0.48; }
+  .a-day-body { display: none; padding: 10px 12px; }
+  .a-day-body.is-open { display: block; }
+
+  .a-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 5px 0; border-bottom: 1.5px solid rgba(0,0,0,0.1);
+    font-size: 12px; font-weight: 500;
+  }
+  .a-item:last-child { border-bottom: none; }
+
+  .a-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; white-space: nowrap; }
+  .a-badge.done { border: 1.5px solid rgba(0,0,0,0.25); opacity: 0.42; }
+  .a-badge.miss { border: 1.5px solid var(--urgent); color: var(--urgent); }
+
+  .uc-block { border: 2.5px solid var(--urgent); margin-bottom: 10px; }
+  .uc-head  { background: rgba(204,0,0,0.07); padding: 9px 12px; border-bottom: 2px solid var(--urgent); }
+  .uc-label { font-family: 'Black Han Sans', sans-serif; font-size: 14px; text-transform: uppercase; color: var(--urgent); }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+    background: var(--black); color: var(--gold);
+    font-family: 'Black Han Sans', sans-serif; font-size: 11px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 6px 18px; border-radius: 0 0 6px 6px;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    z-index: 999;
+  }
+  .status-bar.show { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); }
+</style>
+</head>
+<body>
+
+<div class="status-bar" id="status-bar">Saving…</div>
+
+<div class="grid">
+  <div class="left-col">
+    <div class="today-panel">
+      <div class="panel-title">Today</div>
+      <div id="today-list"><div class="empty-note">—</div></div>
+    </div>
+    <button class="archive-btn" onclick="openArchive()">
+      Archive <span>&#8594;</span>
+    </button>
+  </div>
+
+  <div class="right-col">
+    <div class="day-panel">
+      <div class="panel-title sm" id="day1-title">—</div>
+      <div id="day1-list"><div class="empty-note">—</div></div>
+    </div>
+    <div class="day-panel">
+      <div class="panel-title sm" id="day2-title">—</div>
+      <div id="day2-list"><div class="empty-note">—</div></div>
+    </div>
+    <div class="day-panel">
+      <div class="panel-title sm" id="day3-title">—</div>
+      <div id="day3-list"><div class="empty-note">—</div></div>
+    </div>
+  </div>
+
+  <button class="add-bar" onclick="openOverlay()">+ &nbsp;&nbsp; Add Task</button>
+</div>
+
+<!-- ADD OVERLAY -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="overlay-sheet">
+    <div class="overlay-head">
+      <div class="overlay-title">New Tasks</div>
+      <button class="overlay-close" onclick="closeOverlay()">&#x2715;</button>
+    </div>
+    <div class="input-row">
+      <input class="task-input" id="task-input" type="text"
+             placeholder="Type a task, press Enter…" onkeydown="inputKey(event)">
+      <button class="task-add-btn" onclick="queueItem()">Add</button>
+    </div>
+    <div class="queue-list" id="queue-list"></div>
+    <button class="submit-btn" id="submit-btn" onclick="submitAll()">Submit All Tasks</button>
+  </div>
+</div>
+
+<!-- ARCHIVE SCREEN -->
+<div class="archive-screen" id="archive-screen">
+  <div class="archive-top">
+    <div class="archive-top-title">Archive</div>
+    <button class="archive-back-btn" onclick="closeArchive()">&#8592; Back</button>
+  </div>
+  <div class="archive-tabs-bar">
+    <button class="a-tab active" onclick="switchTab('timeline',this)">Timeline</button>
+    <button class="a-tab"        onclick="switchTab('unchecked',this)">Unchecked</button>
+  </div>
+  <div class="archive-body">
+    <div class="a-section active" id="a-timeline"></div>
+    <div class="a-section"        id="a-unchecked"></div>
+  </div>
+</div>
+
+<script>
+// ── Utilities ─────────────────────────────────────────────────────────────────
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const z   = n => String(n).padStart(2,'0');
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MFULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Client timezone offset — fixed for the session
+const TZ_OFFSET = new Date().getTimezoneOffset();  // JS sign-inverted minutes
+
+function clientNowSecs() { return Date.now() / 1000; }
+
+/**
+ * Format a UTC-seconds timestamp as a short date label using local time.
+ * ts is a UTC epoch representing local midnight — we add 12 h to land
+ * in the middle of the day before formatting, so DST edge cases don't bite.
+ */
+function dayLabel(midnightUtcSecs) {
+  const d = new Date((midnightUtcSecs + 43200) * 1000);  // +12 h
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+function timeLabel(ts) {
+  const d = new Date(ts * 1000);
+  let h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${z(m)}${ap}`;
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+let _statusTimer;
+function showStatus(msg) {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_statusTimer);
+  _statusTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function apiUrl(path) {
+  return `${path}?tz=${TZ_OFFSET}&now=${clientNowSecs().toFixed(3)}`;
+}
+
+// ── Countdown timers for recently-checked items ───────────────────────────────
+// Map of task id → { checkedAt (secs), intervalId }
+const _countdowns = {};
+const AUTO_ARCHIVE_SECS = 300;
+
+function startCountdown(id, checkedAt) {
+  if (_countdowns[id]) return;           // already running
+  const el = document.getElementById(`cd-${id}`);
+  if (!el) return;
+
+  function tick() {
+    const remaining = AUTO_ARCHIVE_SECS - (clientNowSecs() - checkedAt);
+    const cdEl = document.getElementById(`cd-${id}`);
+    if (!cdEl) { clearInterval(_countdowns[id]?.intervalId); delete _countdowns[id]; return; }
+    if (remaining <= 0) {
+      clearInterval(_countdowns[id]?.intervalId);
+      delete _countdowns[id];
+      renderAll();   // trigger re-fetch so item disappears
+      return;
+    }
+    const mins = Math.floor(remaining / 60);
+    const secs = Math.floor(remaining % 60);
+    cdEl.textContent = `archiving in ${mins}:${z(secs)}`;
+  }
+
+  tick();
+  const intervalId = setInterval(tick, 1000);
+  _countdowns[id] = { checkedAt, intervalId };
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+async function renderAll() {
+  let data;
+  try { data = await apiFetch(apiUrl('/get')); }
+  catch (e) { showStatus('Connection error'); return; }
+
+  const b  = data.buckets;
+  const pd = data.panel_dates;
+
+  renderBucket('today-list', b.today, true);
+  renderBucket('day1-list',  b.day1,  true);
+  renderBucket('day2-list',  b.day2,  true);
+  renderBucket('day3-list',  b.day3,  true);
+
+  // Labels derived from panel_dates — these are local midnight UTC timestamps
+  document.getElementById('day1-title').textContent = dayLabel(pd.day1);
+  document.getElementById('day2-title').textContent = dayLabel(pd.day2);
+  document.getElementById('day3-title').textContent = dayLabel(pd.day3);
+
+  // Restart any countdowns for checked-but-not-yet-archived items
+  const allLive = [...b.today, ...b.day1, ...b.day2, ...b.day3];
+  allLive.forEach(item => {
+    if (item.checked && item.checked_at && !item.archived) {
+      startCountdown(item.id, item.checked_at);
+    }
+  });
+}
+
+function renderBucket(id, items, canCheck) {
+  const el = document.getElementById(id);
+  if (!items || !items.length) {
+    el.innerHTML = '<div class="empty-note">—</div>';
+    return;
+  }
+
+  el.innerHTML = items.map(item => {
+    const urgent = item.urgent && !item.checked;
+    const showCd = item.checked && item.checked_at && !item.archived;
+    const remaining = showCd ? Math.max(0, AUTO_ARCHIVE_SECS - (clientNowSecs() - item.checked_at)) : 0;
+    const cdText = showCd && remaining > 0
+      ? `archiving in ${Math.floor(remaining/60)}:${z(Math.floor(remaining%60))}`
+      : '';
+
+    return `
+      <div class="item-row" onclick="handleRowClick(event,'${item.id}',${canCheck})">
+        <input type="checkbox"
+               ${item.checked ? 'checked' : ''}
+               ${!canCheck ? 'disabled' : ''}
+               onchange="toggleTask('${item.id}')"
+               onclick="event.stopPropagation()">
+        <div class="item-label-wrap">
+          <span class="item-text${item.checked ? ' done' : ''}">
+            ${esc(item.text)}${urgent ? '<span class="urgent-tag">Urgent</span>' : ''}${cdText ? `<span class="archive-countdown" id="cd-${item.id}">${cdText}</span>` : ''}
+          </span>
+          <span class="item-time">${timeLabel(item.created_at)}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Kick off live countdowns for any checked items in this bucket
+  items.forEach(item => {
+    if (item.checked && item.checked_at && !item.archived) {
+      startCountdown(item.id, item.checked_at);
+    }
+  });
+}
+
+function handleRowClick(e, id, canCheck) {
+  if (!canCheck) return;
+  if (e.target.tagName !== 'INPUT') toggleTask(id);
+}
+
+async function toggleTask(id) {
+  showStatus('Saving…');
+  try {
+    await apiFetch('/toggle', { method: 'POST', body: JSON.stringify({ id }) });
+    // Clear existing countdown for this id — renderAll will restart if needed
+    if (_countdowns[id]) {
+      clearInterval(_countdowns[id].intervalId);
+      delete _countdowns[id];
+    }
+    showStatus('Saved');
+    renderAll();
+  } catch { showStatus('Error saving'); }
+}
+
+// ── Queue ─────────────────────────────────────────────────────────────────────
+let queue = [];
+
+function openOverlay() {
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('task-input').focus(), 260);
+}
+function closeOverlay() { document.getElementById('overlay').classList.remove('open'); }
+function bgClose(e) { if (e.target === document.getElementById('overlay')) closeOverlay(); }
+function inputKey(e) { if (e.key === 'Enter') { e.preventDefault(); queueItem(); } }
+
+function queueItem() {
+  const inp = document.getElementById('task-input');
+  const v = inp.value.trim();
+  if (!v) return;
+  queue.push(v); inp.value = '';
+  renderQueue();
+}
+function removeQ(i) { queue.splice(i, 1); renderQueue(); }
+function renderQueue() {
+  const el  = document.getElementById('queue-list');
+  const btn = document.getElementById('submit-btn');
+  btn.style.display = queue.length ? 'block' : 'none';
+  el.innerHTML = queue.map((t, i) => `
+    <div class="queue-item">
+      <span>${esc(t)}</span>
+      <button class="queue-remove" onclick="removeQ(${i})">&#215;</button>
+    </div>`).join('');
+}
+
+async function submitAll() {
+  if (!queue.length) return;
+  showStatus('Saving…');
+  try {
+    await apiFetch('/add', { method: 'POST', body: JSON.stringify({ tasks: queue }) });
+    queue = []; renderQueue(); closeOverlay();
+    showStatus('Tasks added');
+    renderAll();
+  } catch { showStatus('Error adding tasks'); }
+}
+
+// ── Archive ───────────────────────────────────────────────────────────────────
+async function openArchive() {
+  await buildArchive();
+  document.getElementById('archive-screen').classList.add('open');
+}
+function closeArchive() { document.getElementById('archive-screen').classList.remove('open'); }
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.a-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.a-section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('a-' + tab).classList.add('active');
+}
+
+async function buildArchive() {
+  let data;
+  try { data = await apiFetch(apiUrl('/get')); }
+  catch { return; }
+
+  const { archive, unchecked_archive } = data.buckets;
+  const allArchived = [...(archive || []), ...(unchecked_archive || [])];
+
+  // Group by year → month → day using local time
+  const tree = {};
+  allArchived.forEach(item => {
+    const d  = new Date(item.created_at * 1000);
+    const y  = d.getFullYear();
+    const m  = d.getMonth();
+    const dk = `${y}-${z(m+1)}-${z(d.getDate())}`;
+    if (!tree[y])        tree[y]      = {};
+    if (!tree[y][m])     tree[y][m]   = {};
+    if (!tree[y][m][dk]) tree[y][m][dk] = { ts: item.created_at, items: [] };
+    tree[y][m][dk].items.push(item);
+  });
+
+  const tl = document.getElementById('a-timeline');
+  if (!allArchived.length) {
+    tl.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No archived items yet.<br>Items auto-archive 5 min after being checked, or after 4 days.</div>';
+  } else {
+    tl.innerHTML = Object.keys(tree).sort().reverse().map(y => `
+      <div class="a-year">${y}</div>
+      ${Object.keys(tree[y]).sort().reverse().map(m => `
+        <div class="a-month">${MFULL[m]}</div>
+        ${Object.keys(tree[y][m]).sort().reverse().map(dk => {
+          const day  = tree[y][m][dk];
+          const done = day.items.filter(i => i.checked).length;
+          return `
+            <div class="a-day-block">
+              <div class="a-day-head" onclick="toggleDay(this)">
+                <div class="a-day-name">${dayLabel(day.ts)}, ${y}</div>
+                <div class="a-day-meta">${done}/${day.items.length} done</div>
+              </div>
+              <div class="a-day-body">
+                ${day.items.sort((a,b)=>a.created_at-b.created_at).map(i => `
+                  <div class="a-item">
+                    <span style="flex:1;${i.checked?'opacity:0.35;text-decoration:line-through':''}">${esc(i.text)}</span>
+                    <span class="a-badge ${i.checked?'done':'miss'}">${i.checked?'Done':'Missed'}</span>
+                  </div>`).join('')}
+              </div>
+            </div>`;
+        }).join('')}
+      `).join('')}
+    `).join('');
+  }
+
+  // Unchecked archive tab
+  const byDay = {};
+  (unchecked_archive || []).forEach(item => {
+    const d  = new Date(item.created_at * 1000);
+    const dk = `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+    if (!byDay[dk]) byDay[dk] = { ts: item.created_at, items: [] };
+    byDay[dk].items.push(item);
+  });
+
+  const uc = document.getElementById('a-unchecked');
+  if (!Object.keys(byDay).length) {
+    uc.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No unchecked archived items.</div>';
+  } else {
+    uc.innerHTML = Object.keys(byDay).sort().reverse().map(dk => {
+      const day = byDay[dk];
+      return `
+        <div class="uc-block">
+          <div class="uc-head">
+            <div class="uc-label">&#9888; ${dayLabel(day.ts)} — ${day.items.length} unchecked</div>
+          </div>
+          <div style="padding:10px 12px">
+            ${day.items.map(i => `
+              <div class="a-item">
+                <span style="flex:1">${esc(i.text)}</span>
+                <span class="a-badge miss">Missed</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function toggleDay(head) {
+  const body = head.nextElementSibling;
+  const open = body.classList.contains('is-open');
+  body.classList.toggle('is-open', !open);
+  head.classList.toggle('is-open', !open);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+renderAll();
+setInterval(renderAll, 30000);   // poll every 30 s to catch auto-archive transitions
+</script>
+</body>
+</html>
