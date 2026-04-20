@@ -1,5 +1,4 @@
 flask>=2.3.0
 gunicorn
-pywin32
 apscheduler
 openai
