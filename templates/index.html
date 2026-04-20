@@ -14,12 +14,176 @@
     --black:  #0d0d0d;
     --border: 3px solid #0d0d0d;
     --urgent: #cc0000;
+    --green:  #1a7a3c;
   }
   html, body {
     height: 100%; background: var(--gold);
     font-family: 'Space Grotesk', sans-serif;
     color: var(--black); overflow: hidden;
   }
+
+  /* ── LOGIN SCREEN ── */
+  .login-screen {
+    position: fixed; inset: 0;
+    background: var(--gold);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .login-screen.hidden {
+    opacity: 0; pointer-events: none; transform: translateY(-20px);
+  }
+  .login-box {
+    border: var(--border);
+    padding: 44px 38px 38px;
+    width: 100%; max-width: 430px;
+  }
+  .login-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 46px; text-transform: uppercase;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .login-sub {
+    font-size: 11px; font-weight: 500; opacity: 0.42;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .login-input-row { display: flex; border: 2.5px solid var(--black); }
+  .login-email-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
+    padding: 13px 14px; color: var(--black);
+  }
+  .login-email-input::placeholder { opacity: 0.35; }
+  .login-btn {
+    background: var(--black); color: var(--gold); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0 22px; cursor: pointer;
+    transition: opacity 0.12s, letter-spacing 0.12s;
+  }
+  .login-btn:hover { opacity: 0.8; letter-spacing: 0.2em; }
+  .login-error {
+    font-size: 11px; font-weight: 700; color: var(--urgent);
+    margin-top: 11px; min-height: 16px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .login-hint {
+    font-size: 10px; opacity: 0.28; margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── USER TAG ── */
+  .user-tag {
+    position: fixed; top: 10px; right: 14px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; opacity: 0.38;
+    cursor: pointer; z-index: 400;
+    transition: opacity 0.15s;
+    display: none;
+  }
+  .user-tag:hover { opacity: 0.75; }
+
+  /* ── ADMIN OVERLAY ── */
+  .admin-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,13,13,0.9);
+    z-index: 600; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .admin-overlay.open { opacity: 1; pointer-events: all; }
+
+  .admin-panel {
+    background: var(--gold); border: var(--border);
+    width: 100%; max-width: 520px; max-height: 85vh;
+    display: flex; flex-direction: column;
+    transform: translateY(20px);
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .admin-overlay.open .admin-panel { transform: translateY(0); }
+
+  .admin-header {
+    background: var(--black); color: var(--gold);
+    padding: 16px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .admin-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 22px; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .admin-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; border: 1.5px solid rgba(249,194,90,0.4);
+    padding: 3px 8px; opacity: 0.6;
+  }
+  .admin-close {
+    background: var(--gold); color: var(--black); border: none;
+    width: 30px; height: 30px; font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: monospace;
+    transition: transform 0.15s;
+  }
+  .admin-close:hover { transform: rotate(90deg); }
+
+  .admin-body { flex: 1; overflow-y: auto; padding: 22px; }
+
+  .admin-section-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
+    opacity: 0.5; margin-bottom: 12px;
+  }
+
+  /* Add user form */
+  .admin-add-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .admin-input {
+    flex: 1; border: 2px solid var(--black); background: transparent;
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+    padding: 9px 11px; color: var(--black); outline: none;
+  }
+  .admin-input::placeholder { opacity: 0.35; }
+  .admin-add-btn {
+    background: var(--black); color: var(--gold); border: none;
+    font-family: 'Black Han Sans', sans-serif; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0 16px; cursor: pointer; white-space: nowrap;
+    transition: opacity 0.12s;
+  }
+  .admin-add-btn:hover { opacity: 0.8; }
+  .admin-msg {
+    font-size: 11px; font-weight: 700; min-height: 16px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .admin-msg.ok  { color: var(--green); }
+  .admin-msg.err { color: var(--urgent); }
+
+  /* User list */
+  .admin-divider {
+    border: none; border-top: 2px solid var(--black);
+    margin: 18px 0;
+  }
+  .admin-user-list { display: flex; flex-direction: column; gap: 6px; }
+  .admin-user-row {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 2px solid var(--black); padding: 8px 12px;
+    font-size: 12px; font-weight: 500;
+  }
+  .admin-user-info { display: flex; flex-direction: column; gap: 2px; }
+  .admin-user-email { font-size: 13px; font-weight: 600; }
+  .admin-user-meta  { font-size: 10px; opacity: 0.42; letter-spacing: 0.04em; }
+  .admin-approved   { color: var(--green); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--green); padding: 2px 7px; }
+  .admin-revoked    { color: var(--urgent); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--urgent); padding: 2px 7px; }
+  .admin-revoke-btn {
+    background: none; border: 1.5px solid rgba(0,0,0,0.2); color: var(--black);
+    font-family: 'Black Han Sans', sans-serif; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; margin-left: 10px;
+    transition: border-color 0.12s, color 0.12s;
+  }
+  .admin-revoke-btn:hover { border-color: var(--urgent); color: var(--urgent); }
+  .admin-empty { font-size: 12px; opacity: 0.32; padding: 8px 0; }
 
   /* ── GRID ── */
   .grid {
@@ -52,10 +216,7 @@
     transition: transform 0.15s ease, background 0.15s ease;
     user-select: none;
   }
-  .item-row:hover {
-    transform: scale(1.025);
-    background: rgba(0,0,0,0.06);
-  }
+  .item-row:hover { transform: scale(1.025); background: rgba(0,0,0,0.06); }
 
   .item-row input[type="checkbox"] {
     appearance: none;
@@ -81,7 +242,6 @@
   .item-text.done { text-decoration: line-through; opacity: 0.35; }
   .item-time  { font-size: 10px; opacity: 0.38; margin-top: 2px; }
 
-  /* countdown pill shown after checking */
   .archive-countdown {
     display: inline-block; font-size: 9px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase;
@@ -89,14 +249,12 @@
     padding: 1px 6px; margin-left: 8px; vertical-align: middle;
     border-radius: 2px;
   }
-
   .urgent-tag {
     display: inline-block; font-size: 8px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--urgent); border: 1.5px solid var(--urgent);
     padding: 1px 5px; margin-left: 6px; vertical-align: middle;
   }
-
   .empty-note { font-size: 11px; opacity: 0.28; font-weight: 500; padding: 3px 0; }
 
   /* ── ARCHIVE BTN ── */
@@ -125,13 +283,11 @@
     position: relative; z-index: 1;
   }
   .add-bar:hover {
-    background: #1f1f1f;
-    transform: translateY(-4px);
-    padding-bottom: 18px;
-    box-shadow: 0 -4px 0 0 rgba(0,0,0,0.5);
+    background: #1f1f1f; transform: translateY(-4px);
+    padding-bottom: 18px; box-shadow: 0 -4px 0 0 rgba(0,0,0,0.5);
   }
 
-  /* ── OVERLAY ── */
+  /* ── TASK ADD OVERLAY ── */
   .overlay {
     position: fixed; inset: 0;
     background: rgba(13,13,13,0.84);
@@ -140,7 +296,6 @@
     transition: opacity 0.2s ease;
   }
   .overlay.open { opacity: 1; pointer-events: all; }
-
   .overlay-sheet {
     width: 100%; background: var(--gold);
     border-top: 4px solid var(--black);
@@ -149,21 +304,15 @@
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
   }
   .overlay.open .overlay-sheet { transform: translateY(0); }
-
-  .overlay-head {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-  }
+  .overlay-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   .overlay-title { font-family: 'Black Han Sans', sans-serif; font-size: 24px; text-transform: uppercase; }
   .overlay-close {
     background: var(--black); color: var(--gold); border: none;
     width: 32px; height: 32px; font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-family: monospace;
+    display: flex; align-items: center; justify-content: center; font-family: monospace;
     transition: transform 0.15s ease, opacity 0.15s;
   }
   .overlay-close:hover { transform: rotate(90deg); opacity: 0.8; }
-
   .input-row { display: flex; border: 2.5px solid var(--black); }
   .task-input {
     flex: 1; background: var(--gold); border: none; outline: none;
@@ -171,7 +320,6 @@
     padding: 12px 14px; color: var(--black);
   }
   .task-input::placeholder { opacity: 0.38; }
-
   .task-add-btn {
     background: var(--black); color: var(--gold); border: none;
     font-family: 'Black Han Sans', sans-serif; font-size: 13px;
@@ -180,24 +328,19 @@
     transition: opacity 0.12s ease, letter-spacing 0.12s ease;
   }
   .task-add-btn:hover { opacity: 0.8; letter-spacing: 0.18em; }
-
   .queue-list { margin-top: 12px; max-height: 150px; overflow-y: auto; }
-
   .queue-item {
     display: flex; align-items: center; justify-content: space-between;
     padding: 7px 10px; border: 2px solid var(--black); margin-bottom: 4px;
-    font-size: 13px; font-weight: 500;
-    transition: transform 0.12s ease;
+    font-size: 13px; font-weight: 500; transition: transform 0.12s ease;
   }
   .queue-item:hover { transform: scale(1.01); background: rgba(0,0,0,0.04); }
-
   .queue-remove {
     background: none; border: none; color: var(--black);
     font-size: 16px; cursor: pointer; opacity: 0.38; padding: 0 4px;
     transition: opacity 0.12s, color 0.12s;
   }
   .queue-remove:hover { opacity: 1; color: var(--urgent); }
-
   .submit-btn {
     width: 100%; margin-top: 10px;
     background: var(--black); color: var(--gold); border: none;
@@ -216,7 +359,6 @@
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
   }
   .archive-screen.open { transform: translateX(0); }
-
   .archive-top {
     background: var(--black); color: var(--gold);
     padding: 16px 24px;
@@ -231,7 +373,6 @@
     cursor: pointer; transition: background 0.15s, transform 0.15s;
   }
   .archive-back-btn:hover { background: #fbe099; transform: translateX(-3px); }
-
   .archive-tabs-bar { display: flex; border-bottom: var(--border); flex-shrink: 0; }
   .a-tab {
     flex: 1; background: none; border: none; border-right: 2.5px solid var(--black);
@@ -243,20 +384,16 @@
   .a-tab:last-child { border-right: none; }
   .a-tab:hover { opacity: 0.65; }
   .a-tab.active { opacity: 1; background: rgba(0,0,0,0.07); }
-
   .archive-body { flex: 1; overflow-y: auto; padding: 20px 24px 60px; }
   .a-section { display: none; }
   .a-section.active { display: block; }
-
-  .a-year  { font-family: 'Black Han Sans', sans-serif; font-size: 30px; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 5px; margin: 6px 0 14px; }
+  .a-year { font-family: 'Black Han Sans', sans-serif; font-size: 30px; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 5px; margin: 6px 0 14px; }
   .a-month { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.42; margin: 14px 0 7px; }
-
   .a-day-block { border: 2.5px solid var(--black); margin-bottom: 7px; }
   .a-day-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 12px; cursor: pointer; background: rgba(0,0,0,0.05);
-    border-bottom: 2px solid transparent;
-    transition: background 0.1s;
+    border-bottom: 2px solid transparent; transition: background 0.1s;
   }
   .a-day-head:hover { background: rgba(0,0,0,0.1); }
   .a-day-head.is-open { border-bottom-color: var(--black); }
@@ -264,20 +401,17 @@
   .a-day-meta { font-size: 10px; font-weight: 700; opacity: 0.48; }
   .a-day-body { display: none; padding: 10px 12px; }
   .a-day-body.is-open { display: block; }
-
   .a-item {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; padding: 5px 0; border-bottom: 1.5px solid rgba(0,0,0,0.1);
     font-size: 12px; font-weight: 500;
   }
   .a-item:last-child { border-bottom: none; }
-
   .a-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; white-space: nowrap; }
   .a-badge.done { border: 1.5px solid rgba(0,0,0,0.25); opacity: 0.42; }
   .a-badge.miss { border: 1.5px solid var(--urgent); color: var(--urgent); }
-
   .uc-block { border: 2.5px solid var(--urgent); margin-bottom: 10px; }
-  .uc-head  { background: rgba(204,0,0,0.07); padding: 9px 12px; border-bottom: 2px solid var(--urgent); }
+  .uc-head { background: rgba(204,0,0,0.07); padding: 9px 12px; border-bottom: 2px solid var(--urgent); }
   .uc-label { font-family: 'Black Han Sans', sans-serif; font-size: 14px; text-transform: uppercase; color: var(--urgent); }
 
   /* ── STATUS BAR ── */
@@ -297,6 +431,58 @@
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-title">Daily<br>Tracker</div>
+    <div class="login-sub">Approved access only</div>
+    <div class="login-input-row">
+      <input class="login-email-input" id="login-email" type="text"
+             autocomplete="off" placeholder="Enter your email…"
+             onkeydown="loginKey(event)" oninput="loginInputChange(this.value)">
+      <button class="login-btn" onclick="doLogin()">Enter</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint" id="login-hint"></div>
+  </div>
+</div>
+
+<!-- ── ADMIN OVERLAY ── -->
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="admin-title">Admin Panel</div>
+        <div class="admin-badge">Restricted</div>
+      </div>
+      <button class="admin-close" onclick="closeAdmin()">&#x2715;</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section-title">Add approved user</div>
+      <div class="admin-add-row">
+        <input class="admin-input" id="admin-email-input" type="email"
+               placeholder="user@example.com" onkeydown="if(event.key==='Enter')adminAddUser()">
+        <input class="admin-input" id="admin-name-input" type="text"
+               placeholder="Display name (optional)" style="max-width:160px"
+               onkeydown="if(event.key==='Enter')adminAddUser()">
+        <button class="admin-add-btn" onclick="adminAddUser()">Add</button>
+      </div>
+      <div class="admin-msg" id="admin-msg"></div>
+
+      <hr class="admin-divider">
+      <div class="admin-section-title">Approved users</div>
+      <div class="admin-user-list" id="admin-user-list">
+        <div class="admin-empty">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── USER TAG ── -->
+<div class="user-tag" id="user-tag" onclick="doLogout()">
+  ⬤ <span id="user-email-label"></span> &nbsp;·&nbsp; Log out
+</div>
 
 <div class="status-bar" id="status-bar">Saving…</div>
 
@@ -329,7 +515,7 @@
   <button class="add-bar" onclick="openOverlay()">+ &nbsp;&nbsp; Add Task</button>
 </div>
 
-<!-- ADD OVERLAY -->
+<!-- TASK ADD OVERLAY -->
 <div class="overlay" id="overlay" onclick="bgClose(event)">
   <div class="overlay-sheet">
     <div class="overlay-head">
@@ -368,27 +554,226 @@ const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;
 const z   = n => String(n).padStart(2,'0');
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MFULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-// Client timezone offset — fixed for the session
-const TZ_OFFSET = new Date().getTimezoneOffset();  // JS sign-inverted minutes
+const TZ_OFFSET = new Date().getTimezoneOffset();
+const ADMIN_PASSWORD = 'ADMIN321';
 
 function clientNowSecs() { return Date.now() / 1000; }
 
-/**
- * Format a UTC-seconds timestamp as a short date label using local time.
- * ts is a UTC epoch representing local midnight — we add 12 h to land
- * in the middle of the day before formatting, so DST edge cases don't bite.
- */
 function dayLabel(midnightUtcSecs) {
-  const d = new Date((midnightUtcSecs + 43200) * 1000);  // +12 h
+  const d = new Date((midnightUtcSecs + 43200) * 1000);
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
-
 function timeLabel(ts) {
   const d = new Date(ts * 1000);
   let h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
   return `${h}:${z(m)}${ap}`;
+}
+
+// ── Session ───────────────────────────────────────────────────────────────────
+let SESSION_USER_ID  = localStorage.getItem('user_id')    || '';
+let SESSION_EMAIL    = localStorage.getItem('user_email')  || '';
+let SESSION_NAME     = localStorage.getItem('user_name')   || '';
+
+function isLoggedIn() { return !!SESSION_USER_ID; }
+
+function applySession() {
+  if (isLoggedIn()) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('user-tag').style.display = 'block';
+    document.getElementById('user-email-label').textContent = SESSION_NAME || SESSION_EMAIL;
+    renderAll();
+  }
+}
+
+// ── Admin password detection while typing ─────────────────────────────────────
+function loginInputChange(val) {
+  // Clear error when user edits
+  document.getElementById('login-error').textContent = '';
+  if (val.trim() === ADMIN_PASSWORD) {
+    document.getElementById('login-hint').textContent = 'Press Enter or click Enter to open admin panel';
+  } else {
+    document.getElementById('login-hint').textContent = '';
+  }
+}
+
+function loginKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    doLogin();
+  }
+}
+
+async function doLogin() {
+  const inp   = document.getElementById('login-email');
+  const errEl = document.getElementById('login-error');
+  const val   = inp.value.trim();
+  errEl.textContent = '';
+  document.getElementById('login-hint').textContent = '';
+
+  // Admin bypass
+  if (val === ADMIN_PASSWORD) {
+    openAdmin();
+    inp.value = '';
+    return;
+  }
+
+  const email = val.toLowerCase();
+  if (!email || !email.includes('@')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  try {
+    const res  = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Access denied.';
+      return;
+    }
+
+    SESSION_USER_ID = data.user_id;
+    SESSION_EMAIL   = data.email;
+    SESSION_NAME    = data.display_name || data.email;
+    localStorage.setItem('user_id',    SESSION_USER_ID);
+    localStorage.setItem('user_email', SESSION_EMAIL);
+    localStorage.setItem('user_name',  SESSION_NAME);
+    applySession();
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+  }
+}
+
+function doLogout() {
+  SESSION_USER_ID = '';
+  SESSION_EMAIL   = '';
+  SESSION_NAME    = '';
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('user_email');
+  localStorage.removeItem('user_name');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('user-tag').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-hint').textContent = '';
+}
+
+// ── Admin panel ───────────────────────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  document.getElementById('admin-msg').textContent = '';
+  document.getElementById('admin-msg').className = 'admin-msg';
+  adminLoadUsers();
+}
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+}
+
+async function adminLoadUsers() {
+  const listEl = document.getElementById('admin-user-list');
+  listEl.innerHTML = '<div class="admin-empty">Loading…</div>';
+  try {
+    const res  = await fetch('/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_password: ADMIN_PASSWORD }),
+    });
+    const data = await res.json();
+    if (!res.ok) { listEl.innerHTML = '<div class="admin-empty">Error loading users.</div>'; return; }
+
+    const users = data.users || [];
+    if (!users.length) {
+      listEl.innerHTML = '<div class="admin-empty">No users yet.</div>';
+      return;
+    }
+
+    listEl.innerHTML = users.map(u => `
+      <div class="admin-user-row">
+        <div class="admin-user-info">
+          <div class="admin-user-email">${esc(u.email)}</div>
+          <div class="admin-user-meta">${esc(u.display_name || '—')} &nbsp;·&nbsp; mailbox: ${esc(u.mailbox_key || '—')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="${u.approved ? 'admin-approved' : 'admin-revoked'}">${u.approved ? 'Active' : 'Revoked'}</span>
+          ${u.approved ? `<button class="admin-revoke-btn" onclick="adminRevokeUser('${esc(u.email)}')">Revoke</button>` : ''}
+        </div>
+      </div>`).join('');
+  } catch {
+    listEl.innerHTML = '<div class="admin-empty">Connection error.</div>';
+  }
+}
+
+async function adminAddUser() {
+  const emailEl = document.getElementById('admin-email-input');
+  const nameEl  = document.getElementById('admin-name-input');
+  const msgEl   = document.getElementById('admin-msg');
+  const email   = emailEl.value.trim().toLowerCase();
+  const name    = nameEl.value.trim();
+
+  msgEl.className = 'admin-msg';
+  msgEl.textContent = '';
+
+  if (!email || !email.includes('@')) {
+    msgEl.className = 'admin-msg err';
+    msgEl.textContent = 'Enter a valid email address.';
+    return;
+  }
+
+  try {
+    const res  = await fetch('/admin/add_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        admin_password: ADMIN_PASSWORD,
+        email,
+        display_name: name || email,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      msgEl.className = 'admin-msg err';
+      msgEl.textContent = data.error || 'Error adding user.';
+      return;
+    }
+    msgEl.className = 'admin-msg ok';
+    msgEl.textContent = `✓ ${data.email} approved.`;
+    emailEl.value = '';
+    nameEl.value  = '';
+    adminLoadUsers();
+  } catch {
+    msgEl.className = 'admin-msg err';
+    msgEl.textContent = 'Connection error.';
+  }
+}
+
+async function adminRevokeUser(email) {
+  if (!confirm(`Revoke access for ${email}?`)) return;
+  const msgEl = document.getElementById('admin-msg');
+  msgEl.className = 'admin-msg';
+  msgEl.textContent = '';
+  try {
+    const res = await fetch('/admin/remove_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_password: ADMIN_PASSWORD, email }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      msgEl.className = 'admin-msg err';
+      msgEl.textContent = data.error || 'Error revoking user.';
+      return;
+    }
+    msgEl.className = 'admin-msg ok';
+    msgEl.textContent = `✓ Access revoked for ${email}.`;
+    adminLoadUsers();
+  } catch {
+    msgEl.className = 'admin-msg err';
+    msgEl.textContent = 'Connection error.';
+  }
 }
 
 // ── Status bar ────────────────────────────────────────────────────────────────
@@ -407,21 +792,16 @@ async function apiFetch(url, opts = {}) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
-
 function apiUrl(path) {
-  return `${path}?tz=${TZ_OFFSET}&now=${clientNowSecs().toFixed(3)}`;
+  return `${path}?user_id=${encodeURIComponent(SESSION_USER_ID)}&tz=${TZ_OFFSET}&now=${clientNowSecs().toFixed(3)}`;
 }
 
-// ── Countdown timers for recently-checked items ───────────────────────────────
-// Map of task id → { checkedAt (secs), intervalId }
+// ── Countdown timers ──────────────────────────────────────────────────────────
 const _countdowns = {};
 const AUTO_ARCHIVE_SECS = 300;
 
 function startCountdown(id, checkedAt) {
-  if (_countdowns[id]) return;           // already running
-  const el = document.getElementById(`cd-${id}`);
-  if (!el) return;
-
+  if (_countdowns[id]) return;
   function tick() {
     const remaining = AUTO_ARCHIVE_SECS - (clientNowSecs() - checkedAt);
     const cdEl = document.getElementById(`cd-${id}`);
@@ -429,14 +809,11 @@ function startCountdown(id, checkedAt) {
     if (remaining <= 0) {
       clearInterval(_countdowns[id]?.intervalId);
       delete _countdowns[id];
-      renderAll();   // trigger re-fetch so item disappears
+      renderAll();
       return;
     }
-    const mins = Math.floor(remaining / 60);
-    const secs = Math.floor(remaining % 60);
-    cdEl.textContent = `archiving in ${mins}:${z(secs)}`;
+    cdEl.textContent = `archiving in ${Math.floor(remaining/60)}:${z(Math.floor(remaining%60))}`;
   }
-
   tick();
   const intervalId = setInterval(tick, 1000);
   _countdowns[id] = { checkedAt, intervalId };
@@ -444,29 +821,25 @@ function startCountdown(id, checkedAt) {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 async function renderAll() {
+  if (!isLoggedIn()) return;
   let data;
   try { data = await apiFetch(apiUrl('/get')); }
-  catch (e) { showStatus('Connection error'); return; }
+  catch { showStatus('Connection error'); return; }
 
-  const b  = data.buckets;
-  const pd = data.panel_dates;
+  const b = data.buckets, pd = data.panel_dates;
 
   renderBucket('today-list', b.today, true);
   renderBucket('day1-list',  b.day1,  true);
   renderBucket('day2-list',  b.day2,  true);
   renderBucket('day3-list',  b.day3,  true);
 
-  // Labels derived from panel_dates — these are local midnight UTC timestamps
   document.getElementById('day1-title').textContent = dayLabel(pd.day1);
   document.getElementById('day2-title').textContent = dayLabel(pd.day2);
   document.getElementById('day3-title').textContent = dayLabel(pd.day3);
 
-  // Restart any countdowns for checked-but-not-yet-archived items
-  const allLive = [...b.today, ...b.day1, ...b.day2, ...b.day3];
-  allLive.forEach(item => {
-    if (item.checked && item.checked_at && !item.archived) {
+  [...b.today, ...b.day1, ...b.day2, ...b.day3].forEach(item => {
+    if (item.checked && item.checked_at && !item.archived)
       startCountdown(item.id, item.checked_at);
-    }
   });
 }
 
@@ -476,15 +849,13 @@ function renderBucket(id, items, canCheck) {
     el.innerHTML = '<div class="empty-note">—</div>';
     return;
   }
-
   el.innerHTML = items.map(item => {
-    const urgent = item.urgent && !item.checked;
-    const showCd = item.checked && item.checked_at && !item.archived;
+    const urgent  = item.urgent && !item.checked;
+    const showCd  = item.checked && item.checked_at && !item.archived;
     const remaining = showCd ? Math.max(0, AUTO_ARCHIVE_SECS - (clientNowSecs() - item.checked_at)) : 0;
-    const cdText = showCd && remaining > 0
+    const cdText  = showCd && remaining > 0
       ? `archiving in ${Math.floor(remaining/60)}:${z(Math.floor(remaining%60))}`
       : '';
-
     return `
       <div class="item-row" onclick="handleRowClick(event,'${item.id}',${canCheck})">
         <input type="checkbox"
@@ -500,12 +871,9 @@ function renderBucket(id, items, canCheck) {
         </div>
       </div>`;
   }).join('');
-
-  // Kick off live countdowns for any checked items in this bucket
   items.forEach(item => {
-    if (item.checked && item.checked_at && !item.archived) {
+    if (item.checked && item.checked_at && !item.archived)
       startCountdown(item.id, item.checked_at);
-    }
   });
 }
 
@@ -515,14 +883,11 @@ function handleRowClick(e, id, canCheck) {
 }
 
 async function toggleTask(id) {
+  if (!isLoggedIn()) return;
   showStatus('Saving…');
   try {
-    await apiFetch('/toggle', { method: 'POST', body: JSON.stringify({ id }) });
-    // Clear existing countdown for this id — renderAll will restart if needed
-    if (_countdowns[id]) {
-      clearInterval(_countdowns[id].intervalId);
-      delete _countdowns[id];
-    }
+    await apiFetch('/toggle', { method: 'POST', body: JSON.stringify({ id, user_id: SESSION_USER_ID }) });
+    if (_countdowns[id]) { clearInterval(_countdowns[id].intervalId); delete _countdowns[id]; }
     showStatus('Saved');
     renderAll();
   } catch { showStatus('Error saving'); }
@@ -530,15 +895,14 @@ async function toggleTask(id) {
 
 // ── Queue ─────────────────────────────────────────────────────────────────────
 let queue = [];
-
 function openOverlay() {
+  if (!isLoggedIn()) return;
   document.getElementById('overlay').classList.add('open');
   setTimeout(() => document.getElementById('task-input').focus(), 260);
 }
 function closeOverlay() { document.getElementById('overlay').classList.remove('open'); }
 function bgClose(e) { if (e.target === document.getElementById('overlay')) closeOverlay(); }
 function inputKey(e) { if (e.key === 'Enter') { e.preventDefault(); queueItem(); } }
-
 function queueItem() {
   const inp = document.getElementById('task-input');
   const v = inp.value.trim();
@@ -557,12 +921,11 @@ function renderQueue() {
       <button class="queue-remove" onclick="removeQ(${i})">&#215;</button>
     </div>`).join('');
 }
-
 async function submitAll() {
-  if (!queue.length) return;
+  if (!queue.length || !isLoggedIn()) return;
   showStatus('Saving…');
   try {
-    await apiFetch('/add', { method: 'POST', body: JSON.stringify({ tasks: queue }) });
+    await apiFetch('/add', { method: 'POST', body: JSON.stringify({ tasks: queue, user_id: SESSION_USER_ID }) });
     queue = []; renderQueue(); closeOverlay();
     showStatus('Tasks added');
     renderAll();
@@ -571,32 +934,28 @@ async function submitAll() {
 
 // ── Archive ───────────────────────────────────────────────────────────────────
 async function openArchive() {
+  if (!isLoggedIn()) return;
   await buildArchive();
   document.getElementById('archive-screen').classList.add('open');
 }
 function closeArchive() { document.getElementById('archive-screen').classList.remove('open'); }
-
 function switchTab(tab, btn) {
   document.querySelectorAll('.a-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.a-section').forEach(s => s.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('a-' + tab).classList.add('active');
 }
-
 async function buildArchive() {
+  if (!isLoggedIn()) return;
   let data;
-  try { data = await apiFetch(apiUrl('/get')); }
-  catch { return; }
-
+  try { data = await apiFetch(apiUrl('/get')); } catch { return; }
   const { archive, unchecked_archive } = data.buckets;
   const allArchived = [...(archive || []), ...(unchecked_archive || [])];
 
-  // Group by year → month → day using local time
   const tree = {};
   allArchived.forEach(item => {
-    const d  = new Date(item.created_at * 1000);
-    const y  = d.getFullYear();
-    const m  = d.getMonth();
+    const d = new Date(item.created_at * 1000);
+    const y = d.getFullYear(), m = d.getMonth();
     const dk = `${y}-${z(m+1)}-${z(d.getDate())}`;
     if (!tree[y])        tree[y]      = {};
     if (!tree[y][m])     tree[y][m]   = {};
@@ -606,14 +965,14 @@ async function buildArchive() {
 
   const tl = document.getElementById('a-timeline');
   if (!allArchived.length) {
-    tl.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No archived items yet.<br>Items auto-archive 5 min after being checked, or after 4 days.</div>';
+    tl.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No archived items yet.</div>';
   } else {
     tl.innerHTML = Object.keys(tree).sort().reverse().map(y => `
       <div class="a-year">${y}</div>
       ${Object.keys(tree[y]).sort().reverse().map(m => `
         <div class="a-month">${MFULL[m]}</div>
         ${Object.keys(tree[y][m]).sort().reverse().map(dk => {
-          const day  = tree[y][m][dk];
+          const day = tree[y][m][dk];
           const done = day.items.filter(i => i.checked).length;
           return `
             <div class="a-day-block">
@@ -634,10 +993,9 @@ async function buildArchive() {
     `).join('');
   }
 
-  // Unchecked archive tab
   const byDay = {};
   (unchecked_archive || []).forEach(item => {
-    const d  = new Date(item.created_at * 1000);
+    const d = new Date(item.created_at * 1000);
     const dk = `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
     if (!byDay[dk]) byDay[dk] = { ts: item.created_at, items: [] };
     byDay[dk].items.push(item);
@@ -674,8 +1032,8 @@ function toggleDay(head) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-renderAll();
-setInterval(renderAll, 30000);   // poll every 30 s to catch auto-archive transitions
+applySession();
+setInterval(renderAll, 30000);
 </script>
 </body>
 </html>
