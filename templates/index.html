@@ -7,477 +7,565 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --gold:   #f9c25a;
-    --goldd:  #e8a832;
-    --black:  #0d0d0d;
-    --border: 3px solid #0d0d0d;
-    --urgent: #cc0000;
-    --green:  #1a7a3c;
-  }
-  /* FIX 1: Split overflow into x/y axes to prevent horizontal bleed */
-  html, body {
-    height: 100%; background: var(--gold);
-    font-family: 'Space Grotesk', sans-serif;
-    color: var(--black);
-    overflow-x: hidden;
-    overflow-y: hidden;
-  }
+/* ── Reset ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold:   #f9c25a;
+  --black:  #0d0d0d;
+  --border: 3px solid #0d0d0d;
+  --urgent: #cc0000;
+  --green:  #1a7a3c;
+}
+html, body {
+  height: 100%; width: 100%;
+  background: var(--gold);
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--black);
+  overflow: hidden;
+}
 
-  /* ── LOGIN SCREEN ── */
-  .login-screen {
-    position: fixed; inset: 0;
-    background: var(--gold);
-    z-index: 500;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-  .login-screen.hidden {
-    opacity: 0; pointer-events: none; transform: translateY(-20px);
-  }
-  /* FIX 4a: Use min() so login box never exceeds viewport on small screens */
-  .login-box {
-    border: var(--border);
-    padding: 44px 38px 38px;
-    width: 100%;
-    max-width: min(430px, calc(100vw - 32px));
-    box-sizing: border-box;
-  }
-  .login-title {
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 46px; text-transform: uppercase;
-    line-height: 1; margin-bottom: 6px;
-  }
-  .login-sub {
-    font-size: 11px; font-weight: 500; opacity: 0.42;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    margin-bottom: 30px;
-  }
-  .login-input-row { display: flex; border: 2.5px solid var(--black); }
-  .login-email-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
-    padding: 13px 14px; color: var(--black);
-    min-width: 0; /* prevent flex child from overflowing */
-  }
-  .login-email-input::placeholder { opacity: 0.35; }
-  .login-btn {
-    background: var(--black); color: var(--gold); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 0 22px; cursor: pointer;
-    transition: opacity 0.12s, letter-spacing 0.12s;
-  }
-  .login-btn:hover { opacity: 0.8; letter-spacing: 0.2em; }
-  .login-error {
-    font-size: 11px; font-weight: 700; color: var(--urgent);
-    margin-top: 11px; min-height: 16px;
-    letter-spacing: 0.06em; text-transform: uppercase;
-  }
-  .login-hint {
-    font-size: 10px; opacity: 0.28; margin-top: 8px;
-    letter-spacing: 0.05em;
-  }
+/* ══════════════════════════════════════════════
+   MAIN LAYOUT
+   Fixed chrome bars top and bottom.
+   Content fills the space between them exactly.
+══════════════════════════════════════════════ */
+.chrome-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: 54px;
+  background: var(--black);
+  border-bottom: var(--border);
+  display: flex; align-items: stretch;
+}
+.chrome-top .ct-spacer { flex: 1; }
 
-  /* ── USER TAG ── */
-  .user-tag {
-    position: fixed; top: 10px; right: 14px;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; opacity: 0.38;
-    cursor: pointer; z-index: 400;
-    transition: opacity 0.15s;
-    display: none;
-  }
-  .user-tag:hover { opacity: 0.75; }
+/* overflow pill — hidden until tasks overflow */
+.overflow-pill {
+  display: none; align-items: center; gap: 7px;
+  padding: 0 16px;
+  border-right: var(--border);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--gold); cursor: pointer;
+  animation: pill-pulse 2s ease-in-out infinite;
+  transition: background 0.13s;
+}
+.overflow-pill.visible { display: flex; }
+.overflow-pill:hover { background: #1f1f1f; }
+.overflow-pill .pill-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--urgent); flex-shrink: 0;
+}
+@keyframes pill-pulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.6; }
+}
 
-  /* ── ADMIN OVERLAY ── */
-  .admin-overlay {
-    position: fixed; inset: 0;
-    background: rgba(13,13,13,0.9);
-    z-index: 600; display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .admin-overlay.open { opacity: 1; pointer-events: all; }
+.chrome-top .ct-user {
+  display: none; align-items: center;
+  padding: 0 18px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold); opacity: 0.45;
+  cursor: pointer; border-left: var(--border);
+  transition: opacity 0.13s, background 0.13s;
+}
+.chrome-top .ct-user:hover { opacity: 0.8; background: #1f1f1f; }
+.chrome-top .ct-user.visible { display: flex; }
 
-  /* FIX 4b: Use min() so admin panel never exceeds viewport on small screens */
-  .admin-panel {
-    background: var(--gold); border: var(--border);
-    width: 100%;
-    max-width: min(520px, calc(100vw - 32px));
-    max-height: 85vh;
-    box-sizing: border-box;
-    display: flex; flex-direction: column;
-    transform: translateY(20px);
-    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  }
-  .admin-overlay.open .admin-panel { transform: translateY(0); }
+/* ── Bottom chrome: 3-button bar ── */
+.chrome-bottom {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  height: 52px;
+  background: var(--black);
+  border-top: var(--border);
+  display: flex; align-items: stretch;
+}
+.cb-left, .cb-center, .cb-right {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold); cursor: pointer;
+  border: none; background: transparent;
+  transition: background 0.13s, letter-spacing 0.15s;
+}
+.cb-left  { flex: 0 0 160px; padding: 0 22px; border-right: var(--border); }
+.cb-center{ flex: 1; }
+.cb-right { flex: 0 0 160px; padding: 0 22px; border-left: var(--border); }
+.cb-left:hover, .cb-center:hover, .cb-right:hover { background: #1f1f1f; letter-spacing: 0.32em; }
+.cb-divider { display: none; }
 
-  .admin-header {
-    background: var(--black); color: var(--gold);
-    padding: 16px 22px;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-shrink: 0;
-  }
-  .admin-title {
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 22px; text-transform: uppercase; letter-spacing: 1px;
-  }
-  .admin-badge {
-    font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
-    text-transform: uppercase; border: 1.5px solid rgba(249,194,90,0.4);
-    padding: 3px 8px; opacity: 0.6;
-  }
-  .admin-close {
-    background: var(--gold); color: var(--black); border: none;
-    width: 30px; height: 30px; font-size: 15px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-family: monospace;
-    transition: transform 0.15s;
-  }
-  .admin-close:hover { transform: rotate(90deg); }
+/* ── Content area between fixed bars ── */
+.content-area {
+  position: fixed;
+  top: 54px; bottom: 52px; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-left: var(--border); border-right: var(--border);
+  overflow: hidden;
+}
 
-  .admin-body { flex: 1; overflow-y: auto; padding: 22px; }
+/* Left column: Today fills all available height */
+.col-today {
+  border-right: var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.today-header {
+  padding: 18px 20px 10px;
+  flex-shrink: 0;
+}
+.panel-title-lg {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 38px; line-height: 1; text-transform: uppercase;
+}
+.today-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 4px 20px 12px;
+}
 
-  .admin-section-title {
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
-    opacity: 0.5; margin-bottom: 12px;
-  }
+.col-right {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.col-today-spill {
+  flex: 1;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.spill-header {
+  padding: 18px 16px 10px;
+  flex-shrink: 0;
+}
+.panel-title-sm {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 38px; line-height: 1; text-transform: uppercase;
+  opacity: 0.45;
+}
+.spill-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 4px 16px 12px;
+}
 
-  /* Add user form */
-  .admin-add-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .admin-input {
-    flex: 1; border: 2px solid var(--black); background: transparent;
-    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
-    padding: 9px 11px; color: var(--black); outline: none;
-    min-width: 0; /* prevent flex child overflow */
-  }
-  .admin-input::placeholder { opacity: 0.35; }
-  .admin-add-btn {
-    background: var(--black); color: var(--gold); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 11px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 0 16px; cursor: pointer; white-space: nowrap;
-    transition: opacity 0.12s;
-  }
-  .admin-add-btn:hover { opacity: 0.8; }
-  .admin-msg {
-    font-size: 11px; font-weight: 700; min-height: 16px;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    margin-bottom: 18px;
-  }
-  .admin-msg.ok  { color: var(--green); }
-  .admin-msg.err { color: var(--urgent); }
+/* ══════════════════════════════════════════════
+   TASK ITEMS
+══════════════════════════════════════════════ */
+.item-row {
+  display: flex; align-items: flex-start; gap: 0;
+  margin-bottom: 2px; padding: 4px 4px 4px 0;
+  border-radius: 3px;
+  transition: background 0.13s;
+  user-select: none;
+  min-width: 0;
+}
+.item-row:hover { background: rgba(0,0,0,0.055); }
 
-  /* User list */
-  .admin-divider {
-    border: none; border-top: 2px solid var(--black);
-    margin: 18px 0;
-  }
-  .admin-user-list { display: flex; flex-direction: column; gap: 6px; }
-  .admin-user-row {
-    display: flex; align-items: center; justify-content: space-between;
-    border: 2px solid var(--black); padding: 8px 12px;
-    font-size: 12px; font-weight: 500;
-  }
-  .admin-user-info { display: flex; flex-direction: column; gap: 2px; }
-  .admin-user-email { font-size: 13px; font-weight: 600; }
-  .admin-user-meta  { font-size: 10px; opacity: 0.42; letter-spacing: 0.04em; }
-  .admin-approved   { color: var(--green); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--green); padding: 2px 7px; }
-  .admin-revoked    { color: var(--urgent); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--urgent); padding: 2px 7px; }
-  .admin-revoke-btn {
-    background: none; border: 1.5px solid rgba(0,0,0,0.2); color: var(--black);
-    font-family: 'Black Han Sans', sans-serif; font-size: 10px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 4px 10px; cursor: pointer; margin-left: 10px;
-    transition: border-color 0.12s, color 0.12s;
-  }
-  .admin-revoke-btn:hover { border-color: var(--urgent); color: var(--urgent); }
-  .admin-empty { font-size: 12px; opacity: 0.32; padding: 8px 0; }
+/* checkbox + X stacked vertically */
+.item-controls {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; flex-shrink: 0; padding-top: 2px; margin-right: 8px; width: 20px;
+}
+.item-cb {
+  appearance: none;
+  width: 16px; height: 16px;
+  border: 2.5px solid var(--black);
+  background: transparent; cursor: pointer;
+  position: relative; flex-shrink: 0;
+  transition: background 0.12s;
+}
+.item-cb:checked { background: var(--black); }
+.item-cb:checked::after {
+  content: '';
+  position: absolute; left: 2px; top: 0;
+  width: 5px; height: 8px;
+  border: 2px solid var(--gold);
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+.item-cb:disabled { opacity: 0.3; cursor: default; }
 
-  /* ── GRID ── */
-  /* FIX 2: minmax(0,1fr) prevents column tracks from overflowing their bounds */
-  .grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 1fr auto;
-    height: 100vh;
-    width: 100%;
-    max-width: 100vw;
-    border: var(--border);
-    overflow: hidden;
-  }
-  .left-col  { display: grid; grid-template-rows: 1fr auto; border-right: var(--border); min-width: 0; }
-  .right-col { display: grid; grid-template-rows: 1fr 1fr 1fr; min-width: 0; }
+/* instant-archive X */
+.item-x {
+  width: 14px; height: 14px;
+  border: none; background: none; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.2; transition: opacity 0.12s, color 0.12s;
+  color: var(--black); flex-shrink: 0;
+  font-size: 13px; line-height: 1; font-weight: 700; font-family: monospace;
+}
+.item-x:hover { opacity: 1; color: var(--urgent); }
 
-  /* ── PANELS ── */
-  .today-panel { padding: 18px 20px 14px; overflow-y: auto; border-bottom: var(--border); }
-  .day-panel   { padding: 14px 16px 10px; border-bottom: var(--border); overflow-y: auto; }
-  .day-panel:last-child { border-bottom: none; }
+.item-label-wrap { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
+.item-text {
+  font-size: 13px; font-weight: 500; line-height: 1.35;
+  word-break: break-word;
+}
+.item-text.done { text-decoration: line-through; opacity: 0.32; }
+.item-time { font-size: 10px; opacity: 0.35; margin-top: 1px; }
 
-  /* FIX 5: Prevent long words/titles from pushing column wider */
-  .panel-title {
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 38px; line-height: 1;
-    color: var(--black); margin-bottom: 16px; text-transform: uppercase;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  .panel-title.sm { font-size: 22px; margin-bottom: 10px; }
+.archive-countdown {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  background: rgba(0,0,0,0.07); border: 1.5px solid rgba(0,0,0,0.18);
+  padding: 1px 5px; margin-left: 7px; vertical-align: middle;
+  border-radius: 2px;
+}
+.urgent-tag {
+  display: inline-block; font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--urgent); border: 1.5px solid var(--urgent);
+  padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+}
+.empty-note { font-size: 11px; opacity: 0.25; font-weight: 500; padding: 6px 0; }
 
-  /* ── ITEMS ── */
-  .item-row {
-    display: flex; align-items: flex-start; gap: 9px;
-    margin-bottom: 3px; padding: 5px 6px; border-radius: 3px;
-    cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease;
-    user-select: none;
-  }
-  .item-row:hover { transform: scale(1.025); background: rgba(0,0,0,0.06); }
+/* ══════════════════════════════════════════════
+   OVERLAYS (shared base)
+══════════════════════════════════════════════ */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(13,13,13,0.86);
+  z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+  display: flex; align-items: flex-end;
+}
+.modal-bg.open { opacity: 1; pointer-events: all; }
 
-  .item-row input[type="checkbox"] {
-    appearance: none;
-    width: 17px; height: 17px; min-width: 17px;
-    border: 2.5px solid var(--black);
-    background: transparent; cursor: pointer;
-    margin-top: 2px; position: relative; flex-shrink: 0;
-    transition: background 0.12s;
-  }
-  .item-row input[type="checkbox"]:checked { background: var(--black); }
-  .item-row input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute; left: 3px; top: 0;
-    width: 5px; height: 9px;
-    border: 2px solid var(--gold);
-    border-top: none; border-left: none;
-    transform: rotate(45deg);
-  }
-  .item-row input[type="checkbox"]:disabled { opacity: 0.35; cursor: default; }
+.modal-sheet {
+  width: 100%; background: var(--gold);
+  border-top: 4px solid var(--black);
+  padding: 26px 28px 30px;
+  transform: translateY(100%);
+  transition: transform 0.26s cubic-bezier(0.4,0,0.2,1);
+}
+.modal-bg.open .modal-sheet { transform: translateY(0); }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; text-transform: uppercase; }
+.modal-close {
+  background: var(--black); color: var(--gold); border: none;
+  width: 30px; height: 30px; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: monospace; transition: transform 0.13s;
+}
+.modal-close:hover { transform: rotate(90deg); }
 
-  .item-label-wrap { display: flex; flex-direction: column; min-width: 0; }
-  .item-text  { font-size: 13px; font-weight: 500; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; }
-  .item-text.done { text-decoration: line-through; opacity: 0.35; }
-  .item-time  { font-size: 10px; opacity: 0.38; margin-top: 2px; }
+/* Single task add */
+.add-input-row { display: flex; border: 2.5px solid var(--black); }
+.add-text-input {
+  flex: 1; background: var(--gold); border: none; outline: none;
+  font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 500;
+  padding: 11px 13px; color: var(--black);
+}
+.add-text-input::placeholder { opacity: 0.35; }
+.add-go-btn {
+  background: var(--black); color: var(--gold); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0 18px; cursor: pointer;
+  transition: opacity 0.12s, letter-spacing 0.12s;
+}
+.add-go-btn:hover { opacity: 0.8; letter-spacing: 0.18em; }
 
-  .archive-countdown {
-    display: inline-block; font-size: 9px; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    background: rgba(0,0,0,0.08); border: 1.5px solid rgba(0,0,0,0.2);
-    padding: 1px 6px; margin-left: 8px; vertical-align: middle;
-    border-radius: 2px;
-  }
-  .urgent-tag {
-    display: inline-block; font-size: 8px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--urgent); border: 1.5px solid var(--urgent);
-    padding: 1px 5px; margin-left: 6px; vertical-align: middle;
-  }
-  .empty-note { font-size: 11px; opacity: 0.28; font-weight: 500; padding: 3px 0; }
+.queue-list { margin-top: 10px; max-height: 130px; overflow-y: auto; }
+.queue-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px; border: 2px solid var(--black); margin-bottom: 3px;
+  font-size: 13px; font-weight: 500;
+}
+.queue-remove {
+  background: none; border: none; color: var(--black);
+  font-size: 15px; cursor: pointer; opacity: 0.35; padding: 0 3px;
+  transition: opacity 0.12s, color 0.12s;
+}
+.queue-remove:hover { opacity: 1; color: var(--urgent); }
+.submit-all-btn {
+  width: 100%; margin-top: 10px;
+  background: var(--black); color: var(--gold); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 14px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 12px; cursor: pointer; display: none;
+  transition: opacity 0.13s, letter-spacing 0.13s;
+}
+.submit-all-btn.visible { display: block; }
+.submit-all-btn:hover { opacity: 0.85; letter-spacing: 0.22em; }
 
-  /* ── ARCHIVE BTN ── */
-  .archive-btn {
-    background: var(--black); color: var(--gold); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 26px;
-    letter-spacing: 1px; text-transform: uppercase;
-    padding: 18px 20px; cursor: pointer;
-    text-align: left; width: 100%;
-    display: flex; align-items: center; justify-content: space-between;
-    transition: letter-spacing 0.15s ease, background 0.15s ease;
-  }
-  .archive-btn:hover { letter-spacing: 3px; background: #1a1a1a; }
-  .archive-btn span { font-size: 18px; opacity: 0.55; transition: transform 0.15s ease; }
-  .archive-btn:hover span { transform: translateX(4px); }
+/* ── BULK ADD overlay (centered panel, not bottom sheet) ── */
+.bulk-modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(13,13,13,0.88);
+  z-index: 300;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.bulk-modal-bg.open { opacity: 1; pointer-events: all; }
+.bulk-panel {
+  background: var(--gold); border: var(--border);
+  width: 100%; max-width: 560px;
+  padding: 28px 30px 30px;
+  transform: translateY(16px);
+  transition: transform 0.24s cubic-bezier(0.4,0,0.2,1);
+}
+.bulk-modal-bg.open .bulk-panel { transform: translateY(0); }
+.bulk-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.bulk-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; text-transform: uppercase; }
+.bulk-close {
+  background: var(--black); color: var(--gold); border: none;
+  width: 30px; height: 30px; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: monospace; transition: transform 0.13s;
+}
+.bulk-close:hover { transform: rotate(90deg); }
+.bulk-hint {
+  font-size: 10px; font-weight: 600; opacity: 0.38;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.bulk-textarea {
+  width: 100%; height: 180px; resize: vertical;
+  border: 2.5px solid var(--black); background: transparent;
+  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 11px 13px; color: var(--black); outline: none;
+  line-height: 1.5;
+}
+.bulk-textarea::placeholder { opacity: 0.32; }
+.bulk-preview { margin-top: 10px; max-height: 110px; overflow-y: auto; }
+.bulk-preview-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.08);
+  font-size: 12px; font-weight: 500;
+}
+.bulk-preview-item:last-child { border-bottom: none; }
+.bulk-preview-bullet {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--black); flex-shrink: 0; opacity: 0.4;
+}
+.bulk-submit {
+  width: 100%; margin-top: 12px;
+  background: var(--black); color: var(--gold); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 14px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 13px; cursor: pointer;
+  transition: opacity 0.13s, letter-spacing 0.13s;
+}
+.bulk-submit:hover { opacity: 0.85; letter-spacing: 0.22em; }
+.bulk-count {
+  font-size: 10px; font-weight: 700; opacity: 0.4;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-top: 8px; text-align: right;
+}
 
-  /* ── ADD BAR ── */
-  .add-bar {
-    grid-column: 1 / -1;
-    background: var(--black); color: var(--gold);
-    font-family: 'Black Han Sans', sans-serif;
-    font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase;
-    padding: 14px 20px; cursor: pointer; border: none; width: 100%;
-    text-align: center; border-top: var(--border);
-    transition: background 0.15s ease, transform 0.18s ease, padding-bottom 0.18s ease;
-    position: relative; z-index: 1;
-  }
-  .add-bar:hover {
-    background: #1f1f1f; transform: translateY(-4px);
-    padding-bottom: 18px; box-shadow: 0 -4px 0 0 rgba(0,0,0,0.5);
-  }
+/* ── OVERFLOW fullscreen popup ── */
+.overflow-screen {
+  position: fixed; inset: 0;
+  background: var(--gold);
+  z-index: 400;
+  display: flex; flex-direction: column;
+  transform: translateY(-100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+.overflow-screen.open { transform: translateY(0); }
+.overflow-top {
+  background: var(--black); color: var(--gold);
+  padding: 0 24px;
+  height: 54px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: var(--border);
+}
+.overflow-top-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 20px; text-transform: uppercase; letter-spacing: 1px;
+}
+.overflow-back {
+  background: var(--gold); color: var(--black); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 7px 14px; cursor: pointer;
+  transition: background 0.13s, transform 0.13s;
+}
+.overflow-back:hover { background: #fbe099; transform: translateY(-1px); }
+.overflow-body { flex: 1; overflow-y: auto; padding: 20px 24px 30px; }
 
-  /* ── TASK ADD OVERLAY ── */
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(13,13,13,0.84);
-    z-index: 100; display: flex; align-items: flex-end;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .overlay.open { opacity: 1; pointer-events: all; }
-  /* FIX 3: box-sizing ensures padding doesn't push sheet beyond 100% width */
-  .overlay-sheet {
-    width: 100%;
-    max-width: 100vw;
-    box-sizing: border-box;
-    background: var(--gold);
-    border-top: 4px solid var(--black);
-    padding: 26px 28px 32px;
-    transform: translateY(100%);
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-  }
-  .overlay.open .overlay-sheet { transform: translateY(0); }
-  .overlay-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .overlay-title { font-family: 'Black Han Sans', sans-serif; font-size: 24px; text-transform: uppercase; }
-  .overlay-close {
-    background: var(--black); color: var(--gold); border: none;
-    width: 32px; height: 32px; font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-family: monospace;
-    transition: transform 0.15s ease, opacity 0.15s;
-  }
-  .overlay-close:hover { transform: rotate(90deg); opacity: 0.8; }
-  .input-row { display: flex; border: 2.5px solid var(--black); }
-  .task-input {
-    flex: 1; background: var(--gold); border: none; outline: none;
-    font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 500;
-    padding: 12px 14px; color: var(--black);
-    min-width: 0; /* prevent flex child overflow */
-  }
-  .task-input::placeholder { opacity: 0.38; }
-  .task-add-btn {
-    background: var(--black); color: var(--gold); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 0 20px; cursor: pointer;
-    transition: opacity 0.12s ease, letter-spacing 0.12s ease;
-  }
-  .task-add-btn:hover { opacity: 0.8; letter-spacing: 0.18em; }
-  .queue-list { margin-top: 12px; max-height: 150px; overflow-y: auto; }
-  .queue-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 10px; border: 2px solid var(--black); margin-bottom: 4px;
-    font-size: 13px; font-weight: 500; transition: transform 0.12s ease;
-  }
-  .queue-item:hover { transform: scale(1.01); background: rgba(0,0,0,0.04); }
-  .queue-remove {
-    background: none; border: none; color: var(--black);
-    font-size: 16px; cursor: pointer; opacity: 0.38; padding: 0 4px;
-    transition: opacity 0.12s, color 0.12s;
-  }
-  .queue-remove:hover { opacity: 1; color: var(--urgent); }
-  .submit-btn {
-    width: 100%; margin-top: 10px;
-    background: var(--black); color: var(--gold); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 15px;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    padding: 13px; cursor: pointer; display: none;
-    transition: opacity 0.15s, letter-spacing 0.15s;
-  }
-  .submit-btn:hover { opacity: 0.85; letter-spacing: 0.22em; }
+/* ── ARCHIVE SCREEN ── */
+.archive-screen {
+  position: fixed; inset: 0; background: var(--gold);
+  z-index: 350; display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+.archive-screen.open { transform: translateX(0); }
+.archive-top {
+  background: var(--black); color: var(--gold);
+  padding: 0 24px; height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: var(--border); flex-shrink: 0;
+}
+.archive-top-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; text-transform: uppercase; }
+.archive-back-btn {
+  background: var(--gold); color: var(--black); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 14px;
+  cursor: pointer; transition: background 0.13s, transform 0.13s;
+}
+.archive-back-btn:hover { background: #fbe099; transform: translateX(-2px); }
+.archive-tabs-bar { display: flex; border-bottom: var(--border); flex-shrink: 0; }
+.a-tab {
+  flex: 1; background: none; border: none; border-right: 2.5px solid var(--black);
+  font-family: 'Black Han Sans', sans-serif; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 11px; cursor: pointer; color: var(--black); opacity: 0.35;
+  transition: opacity 0.12s, background 0.12s;
+}
+.a-tab:last-child { border-right: none; }
+.a-tab:hover { opacity: 0.65; }
+.a-tab.active { opacity: 1; background: rgba(0,0,0,0.06); }
+.archive-body { flex: 1; overflow-y: auto; padding: 20px 24px 60px; }
+.a-section { display: none; }
+.a-section.active { display: block; }
+.a-year { font-family: 'Black Han Sans', sans-serif; font-size: 28px; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 4px; margin: 6px 0 12px; }
+.a-month { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.4; margin: 12px 0 6px; }
+.a-day-block { border: 2.5px solid var(--black); margin-bottom: 6px; }
+.a-day-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; cursor: pointer; background: rgba(0,0,0,0.04);
+  border-bottom: 2px solid transparent; transition: background 0.1s;
+}
+.a-day-head:hover { background: rgba(0,0,0,0.09); }
+.a-day-head.is-open { border-bottom-color: var(--black); }
+.a-day-name { font-family: 'Black Han Sans', sans-serif; font-size: 13px; text-transform: uppercase; }
+.a-day-meta { font-size: 10px; font-weight: 700; opacity: 0.45; }
+.a-day-body { display: none; padding: 8px 12px; }
+.a-day-body.is-open { display: block; }
+.a-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 4px 0; border-bottom: 1.5px solid rgba(0,0,0,0.09);
+  font-size: 12px; font-weight: 500;
+}
+.a-item:last-child { border-bottom: none; }
+.a-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 5px; white-space: nowrap; }
+.a-badge.done { border: 1.5px solid rgba(0,0,0,0.22); opacity: 0.4; }
+.a-badge.miss { border: 1.5px solid var(--urgent); color: var(--urgent); }
+.uc-block { border: 2.5px solid var(--urgent); margin-bottom: 8px; }
+.uc-head { background: rgba(204,0,0,0.06); padding: 8px 12px; border-bottom: 2px solid var(--urgent); }
+.uc-label { font-family: 'Black Han Sans', sans-serif; font-size: 13px; text-transform: uppercase; color: var(--urgent); }
 
-  /* ── ARCHIVE SCREEN ── */
-  .archive-screen {
-    position: fixed; inset: 0; background: var(--gold);
-    z-index: 200; display: flex; flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-  }
-  .archive-screen.open { transform: translateX(0); }
-  .archive-top {
-    background: var(--black); color: var(--gold);
-    padding: 16px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: var(--border); flex-shrink: 0;
-  }
-  .archive-top-title { font-family: 'Black Han Sans', sans-serif; font-size: 26px; text-transform: uppercase; }
-  .archive-back-btn {
-    background: var(--gold); color: var(--black); border: none;
-    font-family: 'Black Han Sans', sans-serif; font-size: 12px;
-    letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px;
-    cursor: pointer; transition: background 0.15s, transform 0.15s;
-  }
-  .archive-back-btn:hover { background: #fbe099; transform: translateX(-3px); }
-  .archive-tabs-bar { display: flex; border-bottom: var(--border); flex-shrink: 0; }
-  .a-tab {
-    flex: 1; background: none; border: none; border-right: 2.5px solid var(--black);
-    font-family: 'Black Han Sans', sans-serif; font-size: 13px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 11px; cursor: pointer; color: var(--black); opacity: 0.38;
-    transition: opacity 0.12s, background 0.12s;
-  }
-  .a-tab:last-child { border-right: none; }
-  .a-tab:hover { opacity: 0.65; }
-  .a-tab.active { opacity: 1; background: rgba(0,0,0,0.07); }
-  .archive-body { flex: 1; overflow-y: auto; padding: 20px 24px 60px; }
-  .a-section { display: none; }
-  .a-section.active { display: block; }
-  .a-year { font-family: 'Black Han Sans', sans-serif; font-size: 30px; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 5px; margin: 6px 0 14px; }
-  .a-month { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.42; margin: 14px 0 7px; }
-  .a-day-block { border: 2.5px solid var(--black); margin-bottom: 7px; }
-  .a-day-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px; cursor: pointer; background: rgba(0,0,0,0.05);
-    border-bottom: 2px solid transparent; transition: background 0.1s;
-  }
-  .a-day-head:hover { background: rgba(0,0,0,0.1); }
-  .a-day-head.is-open { border-bottom-color: var(--black); }
-  .a-day-name { font-family: 'Black Han Sans', sans-serif; font-size: 14px; text-transform: uppercase; }
-  .a-day-meta { font-size: 10px; font-weight: 700; opacity: 0.48; }
-  .a-day-body { display: none; padding: 10px 12px; }
-  .a-day-body.is-open { display: block; }
-  .a-item {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; padding: 5px 0; border-bottom: 1.5px solid rgba(0,0,0,0.1);
-    font-size: 12px; font-weight: 500;
-  }
-  .a-item:last-child { border-bottom: none; }
-  .a-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; white-space: nowrap; }
-  .a-badge.done { border: 1.5px solid rgba(0,0,0,0.25); opacity: 0.42; }
-  .a-badge.miss { border: 1.5px solid var(--urgent); color: var(--urgent); }
-  .uc-block { border: 2.5px solid var(--urgent); margin-bottom: 10px; }
-  .uc-head { background: rgba(204,0,0,0.07); padding: 9px 12px; border-bottom: 2px solid var(--urgent); }
-  .uc-label { font-family: 'Black Han Sans', sans-serif; font-size: 14px; text-transform: uppercase; color: var(--urgent); }
+/* ── LOGIN SCREEN ── */
+.login-screen {
+  position: fixed; inset: 0; background: var(--gold);
+  z-index: 700; display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.login-screen.hidden { opacity: 0; pointer-events: none; transform: translateY(-18px); }
+.login-box { border: var(--border); padding: 44px 38px 38px; width: 100%; max-width: 430px; }
+.login-title { font-family: 'Black Han Sans', sans-serif; font-size: 46px; text-transform: uppercase; line-height: 1; margin-bottom: 6px; }
+.login-sub { font-size: 11px; font-weight: 500; opacity: 0.4; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 28px; }
+.login-input-row { display: flex; border: 2.5px solid var(--black); }
+.login-email-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
+  padding: 13px 14px; color: var(--black);
+}
+.login-email-input::placeholder { opacity: 0.33; }
+.login-btn {
+  background: var(--black); color: var(--gold); border: none;
+  font-family: 'Black Han Sans', sans-serif; font-size: 13px;
+  letter-spacing: 0.12em; text-transform: uppercase; padding: 0 22px;
+  cursor: pointer; transition: opacity 0.12s;
+}
+.login-btn:hover { opacity: 0.8; }
+.login-error { font-size: 11px; font-weight: 700; color: var(--urgent); margin-top: 10px; min-height: 16px; letter-spacing: 0.06em; text-transform: uppercase; }
+.login-hint { font-size: 10px; opacity: 0.26; margin-top: 7px; letter-spacing: 0.04em; }
 
-  /* ── STATUS BAR ── */
-  .status-bar {
-    position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-    background: var(--black); color: var(--gold);
-    font-family: 'Black Han Sans', sans-serif; font-size: 11px;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    padding: 6px 18px; border-radius: 0 0 6px 6px;
-    opacity: 0; transition: opacity 0.2s; pointer-events: none;
-    z-index: 999;
-  }
-  .status-bar.show { opacity: 1; }
+/* ── ADMIN OVERLAY ── */
+.admin-overlay {
+  position: fixed; inset: 0; background: rgba(13,13,13,0.9);
+  z-index: 800; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.admin-overlay.open { opacity: 1; pointer-events: all; }
+.admin-panel {
+  background: var(--gold); border: var(--border);
+  width: 100%; max-width: 520px; max-height: 85vh;
+  display: flex; flex-direction: column;
+  transform: translateY(16px); transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+.admin-overlay.open .admin-panel { transform: translateY(0); }
+.admin-header {
+  background: var(--black); color: var(--gold); padding: 15px 20px;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.admin-title { font-family: 'Black Han Sans', sans-serif; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
+.admin-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; border: 1.5px solid rgba(249,194,90,0.35); padding: 3px 8px; opacity: 0.55; }
+.admin-close { background: var(--gold); color: var(--black); border: none; width: 28px; height: 28px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: monospace; transition: transform 0.13s; }
+.admin-close:hover { transform: rotate(90deg); }
+.admin-body { flex: 1; overflow-y: auto; padding: 20px; }
+.admin-section-title { font-family: 'Black Han Sans', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin-bottom: 10px; }
+.admin-add-row { display: flex; gap: 7px; margin-bottom: 5px; }
+.admin-input { flex: 1; border: 2px solid var(--black); background: transparent; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 500; padding: 8px 10px; color: var(--black); outline: none; }
+.admin-input::placeholder { opacity: 0.33; }
+.admin-add-btn { background: var(--black); color: var(--gold); border: none; font-family: 'Black Han Sans', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0 14px; cursor: pointer; transition: opacity 0.12s; white-space: nowrap; }
+.admin-add-btn:hover { opacity: 0.8; }
+.admin-msg { font-size: 11px; font-weight: 700; min-height: 15px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px; }
+.admin-msg.ok  { color: var(--green); }
+.admin-msg.err { color: var(--urgent); }
+.admin-divider { border: none; border-top: 2px solid var(--black); margin: 16px 0; }
+.admin-user-list { display: flex; flex-direction: column; gap: 5px; }
+.admin-user-row { display: flex; align-items: center; justify-content: space-between; border: 2px solid var(--black); padding: 7px 11px; font-size: 12px; font-weight: 500; }
+.admin-user-info { display: flex; flex-direction: column; gap: 1px; }
+.admin-user-email { font-size: 13px; font-weight: 600; }
+.admin-user-meta { font-size: 10px; opacity: 0.4; }
+.admin-approved { color: var(--green); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--green); padding: 2px 6px; }
+.admin-revoked  { color: var(--urgent); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1.5px solid var(--urgent); padding: 2px 6px; }
+.admin-revoke-btn { background: none; border: 1.5px solid rgba(0,0,0,0.18); color: var(--black); font-family: 'Black Han Sans', sans-serif; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; cursor: pointer; margin-left: 8px; transition: border-color 0.12s, color 0.12s; }
+.admin-revoke-btn:hover { border-color: var(--urgent); color: var(--urgent); }
+.admin-empty { font-size: 12px; opacity: 0.3; padding: 6px 0; }
 
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); }
+/* ── STATUS BAR ── */
+.status-bar {
+  position: fixed; top: 54px; left: 50%; transform: translateX(-50%);
+  background: var(--black); color: var(--gold);
+  font-family: 'Black Han Sans', sans-serif; font-size: 10px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 5px 16px; border-radius: 0 0 5px 5px;
+  opacity: 0; transition: opacity 0.18s; pointer-events: none;
+  z-index: 999;
+}
+.status-bar.show { opacity: 1; }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
 </style>
 </head>
 <body>
 
-<!-- ── LOGIN SCREEN ── -->
+<!-- ══ LOGIN ══ -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-title">Daily<br>Tracker</div>
     <div class="login-sub">Approved access only</div>
     <div class="login-input-row">
-      <input class="login-email-input" id="login-email" type="text"
-             autocomplete="off" placeholder="Enter your email…"
+      <input class="login-email-input" id="login-email" type="text" autocomplete="off"
+             placeholder="Enter your email…"
              onkeydown="loginKey(event)" oninput="loginInputChange(this.value)">
       <button class="login-btn" onclick="doLogin()">Enter</button>
     </div>
     <div class="login-error" id="login-error"></div>
-    <div class="login-hint" id="login-hint"></div>
+    <div class="login-hint"  id="login-hint"></div>
   </div>
 </div>
 
-<!-- ── ADMIN OVERLAY ── -->
+<!-- ══ ADMIN ══ -->
 <div class="admin-overlay" id="admin-overlay">
   <div class="admin-panel">
     <div class="admin-header">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="admin-title">Admin Panel</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="admin-title">Admin</div>
         <div class="admin-badge">Restricted</div>
       </div>
       <button class="admin-close" onclick="closeAdmin()">&#x2715;</button>
@@ -485,78 +573,113 @@
     <div class="admin-body">
       <div class="admin-section-title">Add approved user</div>
       <div class="admin-add-row">
-        <input class="admin-input" id="admin-email-input" type="email"
-               placeholder="user@example.com" onkeydown="if(event.key==='Enter')adminAddUser()">
-        <input class="admin-input" id="admin-name-input" type="text"
-               placeholder="Display name (optional)" style="max-width:160px"
-               onkeydown="if(event.key==='Enter')adminAddUser()">
+        <input class="admin-input" id="admin-email-input" type="email" placeholder="user@example.com" onkeydown="if(event.key==='Enter')adminAddUser()">
+        <input class="admin-input" id="admin-name-input"  type="text"  placeholder="Display name" style="max-width:150px" onkeydown="if(event.key==='Enter')adminAddUser()">
         <button class="admin-add-btn" onclick="adminAddUser()">Add</button>
       </div>
       <div class="admin-msg" id="admin-msg"></div>
-
       <hr class="admin-divider">
       <div class="admin-section-title">Approved users</div>
-      <div class="admin-user-list" id="admin-user-list">
-        <div class="admin-empty">Loading…</div>
+      <div class="admin-user-list" id="admin-user-list"><div class="admin-empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FIXED TOP CHROME ══ -->
+<div class="chrome-top">
+  <!-- overflow pill: appears when today has more tasks than fit -->
+  <div class="overflow-pill" id="overflow-pill" onclick="openOverflow()">
+    <div class="pill-dot"></div>
+    <span id="overflow-count-label">+0 more</span>
+  </div>
+  <div class="ct-spacer"></div>
+  <div class="ct-user" id="user-tag" onclick="doLogout()">
+    ⬤ <span id="user-email-label"></span>&nbsp;·&nbsp;Log out
+  </div>
+</div>
+
+<!-- ══ FIXED BOTTOM CHROME: Archive | Bulk Add | + Add Task ══ -->
+<div class="chrome-bottom">
+  <button class="cb-left" onclick="openArchive()">Archive &nbsp;→</button>
+  <div class="cb-divider"></div>
+  <button class="cb-center" onclick="openBulk()">Bulk Add</button>
+  <div class="cb-divider"></div>
+  <button class="cb-right" onclick="openAddOverlay()">+ &nbsp;Add Task</button>
+</div>
+
+<!-- ══ STATUS BAR ══ -->
+<div class="status-bar" id="status-bar">Saving…</div>
+
+<!-- ══ CONTENT AREA ══ -->
+<div class="content-area">
+
+  <!-- Left: Today -->
+  <div class="col-today">
+    <div class="today-header">
+      <div class="panel-title-lg">Today</div>
+    </div>
+    <div class="today-scroll" id="today-scroll">
+      <div class="empty-note">—</div>
+    </div>
+  </div>
+
+  <!-- Right column: full-height spill of Today tasks -->
+  <div class="col-right">
+    <div class="col-today-spill">
+      <div class="spill-header">
+        <div class="panel-title-sm">Today</div>
+      </div>
+      <div class="spill-scroll" id="spill-scroll">
+        <div class="empty-note">—</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ── USER TAG ── -->
-<div class="user-tag" id="user-tag" onclick="doLogout()">
-  ⬤ <span id="user-email-label"></span> &nbsp;·&nbsp; Log out
-</div>
-
-<div class="status-bar" id="status-bar">Saving…</div>
-
-<div class="grid">
-  <div class="left-col">
-    <div class="today-panel">
-      <div class="panel-title">Today</div>
-      <div id="today-list"><div class="empty-note">—</div></div>
+<!-- ══ TASK ADD OVERLAY (bottom sheet) ══ -->
+<div class="modal-bg" id="add-overlay" onclick="addOverlayBgClose(event)">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <div class="modal-title">New Tasks</div>
+      <button class="modal-close" onclick="closeAddOverlay()">&#x2715;</button>
     </div>
-    <button class="archive-btn" onclick="openArchive()">
-      Archive <span>&#8594;</span>
-    </button>
-  </div>
-
-  <div class="right-col">
-    <div class="day-panel">
-      <div class="panel-title sm" id="day1-title">—</div>
-      <div id="day1-list"><div class="empty-note">—</div></div>
-    </div>
-    <div class="day-panel">
-      <div class="panel-title sm" id="day2-title">—</div>
-      <div id="day2-list"><div class="empty-note">—</div></div>
-    </div>
-    <div class="day-panel">
-      <div class="panel-title sm" id="day3-title">—</div>
-      <div id="day3-list"><div class="empty-note">—</div></div>
-    </div>
-  </div>
-
-  <button class="add-bar" onclick="openOverlay()">+ &nbsp;&nbsp; Add Task</button>
-</div>
-
-<!-- TASK ADD OVERLAY -->
-<div class="overlay" id="overlay" onclick="bgClose(event)">
-  <div class="overlay-sheet">
-    <div class="overlay-head">
-      <div class="overlay-title">New Tasks</div>
-      <button class="overlay-close" onclick="closeOverlay()">&#x2715;</button>
-    </div>
-    <div class="input-row">
-      <input class="task-input" id="task-input" type="text"
-             placeholder="Type a task, press Enter…" onkeydown="inputKey(event)">
-      <button class="task-add-btn" onclick="queueItem()">Add</button>
+    <div class="add-input-row">
+      <input class="add-text-input" id="task-input" type="text"
+             placeholder="Type a task, press Enter…" onkeydown="addInputKey(event)">
+      <button class="add-go-btn" onclick="queueItem()">Add</button>
     </div>
     <div class="queue-list" id="queue-list"></div>
-    <button class="submit-btn" id="submit-btn" onclick="submitAll()">Submit All Tasks</button>
+    <button class="submit-all-btn" id="submit-btn" onclick="submitAll()">Submit All</button>
   </div>
 </div>
 
-<!-- ARCHIVE SCREEN -->
+<!-- ══ BULK ADD OVERLAY ══ -->
+<div class="bulk-modal-bg" id="bulk-overlay" onclick="bulkBgClose(event)">
+  <div class="bulk-panel">
+    <div class="bulk-head">
+      <div class="bulk-title">Bulk Add</div>
+      <button class="bulk-close" onclick="closeBulk()">&#x2715;</button>
+    </div>
+    <div class="bulk-hint">Paste tasks — one per line or tab-separated</div>
+    <textarea class="bulk-textarea" id="bulk-textarea"
+              placeholder="Task one&#10;Task two&#10;Task three…"
+              oninput="bulkPreview()"></textarea>
+    <div class="bulk-preview" id="bulk-preview"></div>
+    <div class="bulk-count" id="bulk-count"></div>
+    <button class="bulk-submit" onclick="bulkSubmit()">Add All Tasks</button>
+  </div>
+</div>
+
+<!-- ══ OVERFLOW FULLSCREEN ══ -->
+<div class="overflow-screen" id="overflow-screen">
+  <div class="overflow-top">
+    <div class="overflow-top-title">All Today's Tasks</div>
+    <button class="overflow-back" onclick="closeOverflow()">&#x2715; Close</button>
+  </div>
+  <div class="overflow-body" id="overflow-body"></div>
+</div>
+
+<!-- ══ ARCHIVE SCREEN ══ -->
 <div class="archive-screen" id="archive-screen">
   <div class="archive-top">
     <div class="archive-top-title">Archive</div>
@@ -578,11 +701,10 @@ const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;
 const z   = n => String(n).padStart(2,'0');
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MFULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const TZ_OFFSET = new Date().getTimezoneOffset();
+const TZ_OFFSET      = new Date().getTimezoneOffset();
 const ADMIN_PASSWORD = 'ADMIN321';
 
 function clientNowSecs() { return Date.now() / 1000; }
-
 function dayLabel(midnightUtcSecs) {
   const d = new Date((midnightUtcSecs + 43200) * 1000);
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
@@ -595,38 +717,28 @@ function timeLabel(ts) {
 }
 
 // ── Session ───────────────────────────────────────────────────────────────────
-let SESSION_USER_ID  = localStorage.getItem('user_id')    || '';
-let SESSION_EMAIL    = localStorage.getItem('user_email')  || '';
-let SESSION_NAME     = localStorage.getItem('user_name')   || '';
-
+let SESSION_USER_ID = localStorage.getItem('user_id')    || '';
+let SESSION_EMAIL   = localStorage.getItem('user_email') || '';
+let SESSION_NAME    = localStorage.getItem('user_name')  || '';
 function isLoggedIn() { return !!SESSION_USER_ID; }
 
 function applySession() {
   if (isLoggedIn()) {
     document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('user-tag').style.display = 'block';
+    const tag = document.getElementById('user-tag');
+    tag.classList.add('visible');
     document.getElementById('user-email-label').textContent = SESSION_NAME || SESSION_EMAIL;
     renderAll();
   }
 }
 
-// ── Admin password detection while typing ─────────────────────────────────────
+// ── Login ─────────────────────────────────────────────────────────────────────
 function loginInputChange(val) {
-  // Clear error when user edits
   document.getElementById('login-error').textContent = '';
-  if (val.trim() === ADMIN_PASSWORD) {
-    document.getElementById('login-hint').textContent = 'Press Enter or click Enter to open admin panel';
-  } else {
-    document.getElementById('login-hint').textContent = '';
-  }
+  document.getElementById('login-hint').textContent =
+    val.trim() === ADMIN_PASSWORD ? 'Press Enter to open admin panel' : '';
 }
-
-function loginKey(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    doLogin();
-  }
-}
+function loginKey(e) { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } }
 
 async function doLogin() {
   const inp   = document.getElementById('login-email');
@@ -634,32 +746,16 @@ async function doLogin() {
   const val   = inp.value.trim();
   errEl.textContent = '';
   document.getElementById('login-hint').textContent = '';
-
-  // Admin bypass
-  if (val === ADMIN_PASSWORD) {
-    openAdmin();
-    inp.value = '';
-    return;
-  }
-
+  if (val === ADMIN_PASSWORD) { openAdmin(); inp.value = ''; return; }
   const email = val.toLowerCase();
-  if (!email || !email.includes('@')) {
-    errEl.textContent = 'Please enter a valid email address.';
-    return;
-  }
-
+  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; return; }
   try {
     const res  = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      errEl.textContent = data.error || 'Access denied.';
-      return;
-    }
-
+    if (!res.ok) { errEl.textContent = data.error || 'Access denied.'; return; }
     SESSION_USER_ID = data.user_id;
     SESSION_EMAIL   = data.email;
     SESSION_NAME    = data.display_name || data.email;
@@ -667,68 +763,52 @@ async function doLogin() {
     localStorage.setItem('user_email', SESSION_EMAIL);
     localStorage.setItem('user_name',  SESSION_NAME);
     applySession();
-  } catch (e) {
-    errEl.textContent = 'Connection error. Please try again.';
-  }
+  } catch { errEl.textContent = 'Connection error.'; }
 }
 
 function doLogout() {
-  SESSION_USER_ID = '';
-  SESSION_EMAIL   = '';
-  SESSION_NAME    = '';
-  localStorage.removeItem('user_id');
-  localStorage.removeItem('user_email');
-  localStorage.removeItem('user_name');
+  SESSION_USER_ID = ''; SESSION_EMAIL = ''; SESSION_NAME = '';
+  ['user_id','user_email','user_name'].forEach(k => localStorage.removeItem(k));
   document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('user-tag').style.display = 'none';
+  document.getElementById('user-tag').classList.remove('visible');
   document.getElementById('login-email').value = '';
   document.getElementById('login-error').textContent = '';
-  document.getElementById('login-hint').textContent = '';
+  document.getElementById('login-hint').textContent  = '';
 }
 
-// ── Admin panel ───────────────────────────────────────────────────────────────
+// ── Admin ─────────────────────────────────────────────────────────────────────
 function openAdmin() {
   document.getElementById('admin-overlay').classList.add('open');
-  document.getElementById('admin-msg').textContent = '';
   document.getElementById('admin-msg').className = 'admin-msg';
+  document.getElementById('admin-msg').textContent = '';
   adminLoadUsers();
 }
-function closeAdmin() {
-  document.getElementById('admin-overlay').classList.remove('open');
-}
+function closeAdmin() { document.getElementById('admin-overlay').classList.remove('open'); }
 
 async function adminLoadUsers() {
   const listEl = document.getElementById('admin-user-list');
   listEl.innerHTML = '<div class="admin-empty">Loading…</div>';
   try {
     const res  = await fetch('/admin/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ admin_password: ADMIN_PASSWORD }),
     });
     const data = await res.json();
-    if (!res.ok) { listEl.innerHTML = '<div class="admin-empty">Error loading users.</div>'; return; }
-
+    if (!res.ok) { listEl.innerHTML = '<div class="admin-empty">Error.</div>'; return; }
     const users = data.users || [];
-    if (!users.length) {
-      listEl.innerHTML = '<div class="admin-empty">No users yet.</div>';
-      return;
-    }
-
+    if (!users.length) { listEl.innerHTML = '<div class="admin-empty">No users yet.</div>'; return; }
     listEl.innerHTML = users.map(u => `
       <div class="admin-user-row">
         <div class="admin-user-info">
           <div class="admin-user-email">${esc(u.email)}</div>
-          <div class="admin-user-meta">${esc(u.display_name || '—')} &nbsp;·&nbsp; mailbox: ${esc(u.mailbox_key || '—')}</div>
+          <div class="admin-user-meta">${esc(u.display_name||'—')} · ${esc(u.mailbox_key||'—')}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="${u.approved ? 'admin-approved' : 'admin-revoked'}">${u.approved ? 'Active' : 'Revoked'}</span>
-          ${u.approved ? `<button class="admin-revoke-btn" onclick="adminRevokeUser('${esc(u.email)}')">Revoke</button>` : ''}
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="${u.approved?'admin-approved':'admin-revoked'}">${u.approved?'Active':'Revoked'}</span>
+          ${u.approved?`<button class="admin-revoke-btn" onclick="adminRevokeUser('${esc(u.email)}')">Revoke</button>`:''}
         </div>
       </div>`).join('');
-  } catch {
-    listEl.innerHTML = '<div class="admin-empty">Connection error.</div>';
-  }
+  } catch { listEl.innerHTML = '<div class="admin-empty">Connection error.</div>'; }
 }
 
 async function adminAddUser() {
@@ -737,80 +817,46 @@ async function adminAddUser() {
   const msgEl   = document.getElementById('admin-msg');
   const email   = emailEl.value.trim().toLowerCase();
   const name    = nameEl.value.trim();
-
-  msgEl.className = 'admin-msg';
-  msgEl.textContent = '';
-
-  if (!email || !email.includes('@')) {
-    msgEl.className = 'admin-msg err';
-    msgEl.textContent = 'Enter a valid email address.';
-    return;
-  }
-
+  msgEl.className = 'admin-msg'; msgEl.textContent = '';
+  if (!email || !email.includes('@')) { msgEl.className='admin-msg err'; msgEl.textContent='Enter a valid email.'; return; }
   try {
     const res  = await fetch('/admin/add_user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        admin_password: ADMIN_PASSWORD,
-        email,
-        display_name: name || email,
-      }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_password: ADMIN_PASSWORD, email, display_name: name||email }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      msgEl.className = 'admin-msg err';
-      msgEl.textContent = data.error || 'Error adding user.';
-      return;
-    }
-    msgEl.className = 'admin-msg ok';
-    msgEl.textContent = `✓ ${data.email} approved.`;
-    emailEl.value = '';
-    nameEl.value  = '';
-    adminLoadUsers();
-  } catch {
-    msgEl.className = 'admin-msg err';
-    msgEl.textContent = 'Connection error.';
-  }
+    if (!res.ok) { msgEl.className='admin-msg err'; msgEl.textContent=data.error||'Error.'; return; }
+    msgEl.className='admin-msg ok'; msgEl.textContent=`✓ ${data.email} approved.`;
+    emailEl.value=''; nameEl.value=''; adminLoadUsers();
+  } catch { msgEl.className='admin-msg err'; msgEl.textContent='Connection error.'; }
 }
 
 async function adminRevokeUser(email) {
   if (!confirm(`Revoke access for ${email}?`)) return;
   const msgEl = document.getElementById('admin-msg');
-  msgEl.className = 'admin-msg';
-  msgEl.textContent = '';
+  msgEl.className='admin-msg'; msgEl.textContent='';
   try {
     const res = await fetch('/admin/remove_user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ admin_password: ADMIN_PASSWORD, email }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      msgEl.className = 'admin-msg err';
-      msgEl.textContent = data.error || 'Error revoking user.';
-      return;
-    }
-    msgEl.className = 'admin-msg ok';
-    msgEl.textContent = `✓ Access revoked for ${email}.`;
+    if (!res.ok) { msgEl.className='admin-msg err'; msgEl.textContent=data.error||'Error.'; return; }
+    msgEl.className='admin-msg ok'; msgEl.textContent=`✓ Revoked ${email}.`;
     adminLoadUsers();
-  } catch {
-    msgEl.className = 'admin-msg err';
-    msgEl.textContent = 'Connection error.';
-  }
+  } catch { msgEl.className='admin-msg err'; msgEl.textContent='Connection error.'; }
 }
 
 // ── Status bar ────────────────────────────────────────────────────────────────
 let _statusTimer;
 function showStatus(msg) {
   const el = document.getElementById('status-bar');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   clearTimeout(_statusTimer);
   _statusTimer = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
-// ── API ───────────────────────────────────────────────────────────────────────
+// ── API helpers ───────────────────────────────────────────────────────────────
 async function apiFetch(url, opts = {}) {
   const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
   if (!res.ok) throw new Error(await res.text());
@@ -827,131 +873,237 @@ const AUTO_ARCHIVE_SECS = 300;
 function startCountdown(id, checkedAt) {
   if (_countdowns[id]) return;
   function tick() {
-    const remaining = AUTO_ARCHIVE_SECS - (clientNowSecs() - checkedAt);
-    const cdEl = document.getElementById(`cd-${id}`);
-    if (!cdEl) { clearInterval(_countdowns[id]?.intervalId); delete _countdowns[id]; return; }
-    if (remaining <= 0) {
-      clearInterval(_countdowns[id]?.intervalId);
-      delete _countdowns[id];
-      renderAll();
-      return;
-    }
-    cdEl.textContent = `archiving in ${Math.floor(remaining/60)}:${z(Math.floor(remaining%60))}`;
+    const rem = AUTO_ARCHIVE_SECS - (clientNowSecs() - checkedAt);
+    const el  = document.getElementById(`cd-${id}`);
+    if (!el) { clearInterval(_countdowns[id]?.intervalId); delete _countdowns[id]; return; }
+    if (rem <= 0) { clearInterval(_countdowns[id]?.intervalId); delete _countdowns[id]; renderAll(); return; }
+    el.textContent = `archiving in ${Math.floor(rem/60)}:${z(Math.floor(rem%60))}`;
   }
   tick();
-  const intervalId = setInterval(tick, 1000);
-  _countdowns[id] = { checkedAt, intervalId };
+  _countdowns[id] = { checkedAt, intervalId: setInterval(tick, 1000) };
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// ── Render state ──────────────────────────────────────────────────────────────
+// We keep the last-fetched today items so the overflow screen can be rebuilt
+// without a new network call.
+let _lastTodayItems = [];
+
 async function renderAll() {
   if (!isLoggedIn()) return;
   let data;
   try { data = await apiFetch(apiUrl('/get')); }
   catch { showStatus('Connection error'); return; }
 
-  const b = data.buckets, pd = data.panel_dates;
+  const b = data.buckets;
+  _lastTodayItems = b.today || [];
 
-  renderBucket('today-list', b.today, true);
-  renderBucket('day1-list',  b.day1,  true);
-  renderBucket('day2-list',  b.day2,  true);
-  renderBucket('day3-list',  b.day3,  true);
+  renderTodayPanels(_lastTodayItems);
 
-  document.getElementById('day1-title').textContent = dayLabel(pd.day1);
-  document.getElementById('day2-title').textContent = dayLabel(pd.day2);
-  document.getElementById('day3-title').textContent = dayLabel(pd.day3);
+  // Keep overflow screen live if open
+  if (document.getElementById('overflow-screen').classList.contains('open')) {
+    renderOverflowBody(_lastTodayItems);
+  }
 
-  [...b.today, ...b.day1, ...b.day2, ...b.day3].forEach(item => {
+  // Start countdowns for checked items
+  _lastTodayItems.forEach(item => {
     if (item.checked && item.checked_at && !item.archived)
       startCountdown(item.id, item.checked_at);
   });
 }
 
-function renderBucket(id, items, canCheck) {
-  const el = document.getElementById(id);
-  if (!items || !items.length) {
-    el.innerHTML = '<div class="empty-note">—</div>';
-    return;
+// ── Split today items across left panel and right spill ───────────────────────
+// We measure how many items fit in the left scroll area based on a fixed
+// item height estimate, then put overflow into the spill column.
+// Browsers don't give reliable line counts without layout, so we use a
+// reasonable capacity cap (8 items) and update the overflow pill accordingly.
+const LEFT_PANEL_CAP = 8;   // items shown in main today panel before spilling
+
+function renderTodayPanels(items) {
+  const leftItems  = items.slice(0, LEFT_PANEL_CAP);
+  const spillItems = items.slice(LEFT_PANEL_CAP);
+  const overflow   = items.length > LEFT_PANEL_CAP + 12
+    ? items.slice(LEFT_PANEL_CAP + 12)
+    : [];
+  const spill      = items.slice(LEFT_PANEL_CAP, LEFT_PANEL_CAP + 12);
+
+  renderItemList('today-scroll', leftItems, true);
+  renderItemList('spill-scroll', spill, true);
+
+  // Overflow pill
+  const pill = document.getElementById('overflow-pill');
+  if (overflow.length > 0) {
+    pill.classList.add('visible');
+    document.getElementById('overflow-count-label').textContent =
+      `+${overflow.length + spill.length - spill.length} more`;
+    // simpler: just show total beyond left panel
+    document.getElementById('overflow-count-label').textContent =
+      `+${items.length - LEFT_PANEL_CAP} more`;
+  } else {
+    pill.classList.remove('visible');
   }
-  el.innerHTML = items.map(item => {
-    const urgent  = item.urgent && !item.checked;
-    const showCd  = item.checked && item.checked_at && !item.archived;
-    const remaining = showCd ? Math.max(0, AUTO_ARCHIVE_SECS - (clientNowSecs() - item.checked_at)) : 0;
-    const cdText  = showCd && remaining > 0
-      ? `archiving in ${Math.floor(remaining/60)}:${z(Math.floor(remaining%60))}`
-      : '';
-    return `
-      <div class="item-row" onclick="handleRowClick(event,'${item.id}',${canCheck})">
-        <input type="checkbox"
-               ${item.checked ? 'checked' : ''}
-               ${!canCheck ? 'disabled' : ''}
-               onchange="toggleTask('${item.id}')"
-               onclick="event.stopPropagation()">
-        <div class="item-label-wrap">
-          <span class="item-text${item.checked ? ' done' : ''}">
-            ${esc(item.text)}${urgent ? '<span class="urgent-tag">Urgent</span>' : ''}${cdText ? `<span class="archive-countdown" id="cd-${item.id}">${cdText}</span>` : ''}
-          </span>
-          <span class="item-time">${timeLabel(item.created_at)}</span>
-        </div>
-      </div>`;
-  }).join('');
+}
+
+function renderOverflowBody(items) {
+  const el = document.getElementById('overflow-body');
+  if (!items.length) { el.innerHTML = '<div class="empty-note">No tasks today.</div>'; return; }
+  el.innerHTML = items.map(item => buildItemHTML(item, true)).join('');
   items.forEach(item => {
     if (item.checked && item.checked_at && !item.archived)
       startCountdown(item.id, item.checked_at);
   });
 }
 
+function renderItemList(containerId, items, canCheck) {
+  const el = document.getElementById(containerId);
+  if (!items || !items.length) { el.innerHTML = '<div class="empty-note">—</div>'; return; }
+  el.innerHTML = items.map(item => buildItemHTML(item, canCheck)).join('');
+  items.forEach(item => {
+    if (item.checked && item.checked_at && !item.archived)
+      startCountdown(item.id, item.checked_at);
+  });
+}
+
+function buildItemHTML(item, canCheck) {
+  const urgent  = item.urgent && !item.checked;
+  const showCd  = item.checked && item.checked_at && !item.archived;
+  const rem     = showCd ? Math.max(0, AUTO_ARCHIVE_SECS - (clientNowSecs() - item.checked_at)) : 0;
+  const cdText  = showCd && rem > 0
+    ? `archiving in ${Math.floor(rem/60)}:${z(Math.floor(rem%60))}` : '';
+  const disAttr = !canCheck ? 'disabled' : '';
+  return `
+    <div class="item-row" onclick="handleRowClick(event,'${item.id}',${canCheck})">
+      <div class="item-controls">
+        <input type="checkbox" class="item-cb"
+               ${item.checked ? 'checked' : ''} ${disAttr}
+               onchange="toggleTask('${item.id}')"
+               onclick="event.stopPropagation()">
+        <button class="item-x" title="Archive now"
+                onclick="event.stopPropagation();archiveNow('${item.id}')">&#x2715;</button>
+      </div>
+      <div class="item-label-wrap">
+        <span class="item-text${item.checked ? ' done' : ''}">
+          ${esc(item.text)}${urgent ? '<span class="urgent-tag">Urgent</span>' : ''}${cdText ? `<span class="archive-countdown" id="cd-${item.id}">${cdText}</span>` : ''}
+        </span>
+        <span class="item-time">${timeLabel(item.created_at)}</span>
+      </div>
+    </div>`;
+}
+
 function handleRowClick(e, id, canCheck) {
   if (!canCheck) return;
-  if (e.target.tagName !== 'INPUT') toggleTask(id);
+  if (e.target.classList.contains('item-cb') || e.target.classList.contains('item-x')) return;
+  toggleTask(id);
 }
 
 async function toggleTask(id) {
   if (!isLoggedIn()) return;
   showStatus('Saving…');
   try {
-    await apiFetch('/toggle', { method: 'POST', body: JSON.stringify({ id, user_id: SESSION_USER_ID }) });
+    await apiFetch('/toggle', { method:'POST', body: JSON.stringify({ id, user_id: SESSION_USER_ID }) });
     if (_countdowns[id]) { clearInterval(_countdowns[id].intervalId); delete _countdowns[id]; }
-    showStatus('Saved');
-    renderAll();
+    showStatus('Saved'); renderAll();
   } catch { showStatus('Error saving'); }
 }
 
-// ── Queue ─────────────────────────────────────────────────────────────────────
-let queue = [];
-function openOverlay() {
+async function archiveNow(id) {
   if (!isLoggedIn()) return;
-  document.getElementById('overlay').classList.add('open');
-  setTimeout(() => document.getElementById('task-input').focus(), 260);
+  showStatus('Archiving…');
+  try {
+    await apiFetch('/archive-now', { method:'POST', body: JSON.stringify({ id, user_id: SESSION_USER_ID }) });
+    if (_countdowns[id]) { clearInterval(_countdowns[id].intervalId); delete _countdowns[id]; }
+    showStatus('Archived'); renderAll();
+  } catch { showStatus('Error archiving'); }
 }
-function closeOverlay() { document.getElementById('overlay').classList.remove('open'); }
-function bgClose(e) { if (e.target === document.getElementById('overlay')) closeOverlay(); }
-function inputKey(e) { if (e.key === 'Enter') { e.preventDefault(); queueItem(); } }
+
+// ── Overflow screen ───────────────────────────────────────────────────────────
+function openOverflow() {
+  renderOverflowBody(_lastTodayItems);
+  document.getElementById('overflow-screen').classList.add('open');
+}
+function closeOverflow() { document.getElementById('overflow-screen').classList.remove('open'); }
+
+// ── Task add overlay ──────────────────────────────────────────────────────────
+let queue = [];
+function openAddOverlay() {
+  if (!isLoggedIn()) return;
+  document.getElementById('add-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('task-input').focus(), 240);
+}
+function closeAddOverlay() { document.getElementById('add-overlay').classList.remove('open'); }
+function addOverlayBgClose(e) { if (e.target === document.getElementById('add-overlay')) closeAddOverlay(); }
+function addInputKey(e) { if (e.key === 'Enter') { e.preventDefault(); queueItem(); } }
+
 function queueItem() {
   const inp = document.getElementById('task-input');
-  const v = inp.value.trim();
-  if (!v) return;
-  queue.push(v); inp.value = '';
-  renderQueue();
+  const v = inp.value.trim(); if (!v) return;
+  queue.push(v); inp.value = ''; renderQueue();
 }
 function removeQ(i) { queue.splice(i, 1); renderQueue(); }
 function renderQueue() {
   const el  = document.getElementById('queue-list');
   const btn = document.getElementById('submit-btn');
-  btn.style.display = queue.length ? 'block' : 'none';
-  el.innerHTML = queue.map((t, i) => `
+  el.innerHTML = queue.map((t,i) => `
     <div class="queue-item">
       <span>${esc(t)}</span>
       <button class="queue-remove" onclick="removeQ(${i})">&#215;</button>
     </div>`).join('');
+  btn.classList.toggle('visible', queue.length > 0);
 }
 async function submitAll() {
   if (!queue.length || !isLoggedIn()) return;
   showStatus('Saving…');
   try {
-    await apiFetch('/add', { method: 'POST', body: JSON.stringify({ tasks: queue, user_id: SESSION_USER_ID }) });
-    queue = []; renderQueue(); closeOverlay();
-    showStatus('Tasks added');
+    await apiFetch('/add', { method:'POST', body: JSON.stringify({ tasks: queue, user_id: SESSION_USER_ID }) });
+    queue = []; renderQueue(); closeAddOverlay();
+    showStatus('Tasks added'); renderAll();
+  } catch { showStatus('Error adding tasks'); }
+}
+
+// ── Bulk add overlay ──────────────────────────────────────────────────────────
+function openBulk() {
+  if (!isLoggedIn()) return;
+  document.getElementById('bulk-overlay').classList.add('open');
+  document.getElementById('bulk-textarea').value = '';
+  document.getElementById('bulk-preview').innerHTML = '';
+  document.getElementById('bulk-count').textContent = '';
+  setTimeout(() => document.getElementById('bulk-textarea').focus(), 240);
+}
+function closeBulk() { document.getElementById('bulk-overlay').classList.remove('open'); }
+function bulkBgClose(e) { if (e.target === document.getElementById('bulk-overlay')) closeBulk(); }
+
+function parseBulkText(raw) {
+  // Split on newlines first, then tabs, then semicolons; clean empties
+  return raw
+    .split(/\n/)
+    .flatMap(line => line.split(/\t/))
+    .flatMap(line => line.split(/;/))
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function bulkPreview() {
+  const raw    = document.getElementById('bulk-textarea').value;
+  const tasks  = parseBulkText(raw);
+  const preEl  = document.getElementById('bulk-preview');
+  const cntEl  = document.getElementById('bulk-count');
+  if (!tasks.length) { preEl.innerHTML = ''; cntEl.textContent = ''; return; }
+  preEl.innerHTML = tasks.slice(0, 20).map(t => `
+    <div class="bulk-preview-item">
+      <div class="bulk-preview-bullet"></div>
+      <span>${esc(t)}</span>
+    </div>`).join('') + (tasks.length > 20 ? `<div class="bulk-preview-item" style="opacity:0.35">… and ${tasks.length-20} more</div>` : '');
+  cntEl.textContent = `${tasks.length} task${tasks.length===1?'':'s'} detected`;
+}
+
+async function bulkSubmit() {
+  const raw   = document.getElementById('bulk-textarea').value;
+  const tasks = parseBulkText(raw);
+  if (!tasks.length || !isLoggedIn()) return;
+  showStatus('Saving…');
+  try {
+    await apiFetch('/add', { method:'POST', body: JSON.stringify({ tasks, user_id: SESSION_USER_ID }) });
+    closeBulk();
+    showStatus(`${tasks.length} task${tasks.length===1?'':'s'} added`);
     renderAll();
   } catch { showStatus('Error adding tasks'); }
 }
@@ -969,17 +1121,24 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('a-' + tab).classList.add('active');
 }
+function toggleDay(head) {
+  const body = head.nextElementSibling;
+  const open = body.classList.contains('is-open');
+  body.classList.toggle('is-open', !open);
+  head.classList.toggle('is-open', !open);
+}
+
 async function buildArchive() {
   if (!isLoggedIn()) return;
   let data;
   try { data = await apiFetch(apiUrl('/get')); } catch { return; }
   const { archive, unchecked_archive } = data.buckets;
-  const allArchived = [...(archive || []), ...(unchecked_archive || [])];
+  const all = [...(archive||[]), ...(unchecked_archive||[])];
 
   const tree = {};
-  allArchived.forEach(item => {
-    const d = new Date(item.created_at * 1000);
-    const y = d.getFullYear(), m = d.getMonth();
+  all.forEach(item => {
+    const d  = new Date(item.created_at * 1000);
+    const y  = d.getFullYear(), m = d.getMonth();
     const dk = `${y}-${z(m+1)}-${z(d.getDate())}`;
     if (!tree[y])        tree[y]      = {};
     if (!tree[y][m])     tree[y][m]   = {};
@@ -988,71 +1147,58 @@ async function buildArchive() {
   });
 
   const tl = document.getElementById('a-timeline');
-  if (!allArchived.length) {
-    tl.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No archived items yet.</div>';
-  } else {
-    tl.innerHTML = Object.keys(tree).sort().reverse().map(y => `
-      <div class="a-year">${y}</div>
-      ${Object.keys(tree[y]).sort().reverse().map(m => `
-        <div class="a-month">${MFULL[m]}</div>
-        ${Object.keys(tree[y][m]).sort().reverse().map(dk => {
-          const day = tree[y][m][dk];
-          const done = day.items.filter(i => i.checked).length;
-          return `
-            <div class="a-day-block">
-              <div class="a-day-head" onclick="toggleDay(this)">
-                <div class="a-day-name">${dayLabel(day.ts)}, ${y}</div>
-                <div class="a-day-meta">${done}/${day.items.length} done</div>
-              </div>
-              <div class="a-day-body">
-                ${day.items.sort((a,b)=>a.created_at-b.created_at).map(i => `
-                  <div class="a-item">
-                    <span style="flex:1;${i.checked?'opacity:0.35;text-decoration:line-through':''}">${esc(i.text)}</span>
-                    <span class="a-badge ${i.checked?'done':'miss'}">${i.checked?'Done':'Missed'}</span>
-                  </div>`).join('')}
-              </div>
-            </div>`;
-        }).join('')}
-      `).join('')}
-    `).join('');
-  }
+  tl.innerHTML = !all.length
+    ? '<div style="font-size:13px;opacity:0.3;padding:28px 0;font-weight:500">No archived items yet.</div>'
+    : Object.keys(tree).sort().reverse().map(y => `
+        <div class="a-year">${y}</div>
+        ${Object.keys(tree[y]).sort().reverse().map(m => `
+          <div class="a-month">${MFULL[m]}</div>
+          ${Object.keys(tree[y][m]).sort().reverse().map(dk => {
+            const day  = tree[y][m][dk];
+            const done = day.items.filter(i => i.checked).length;
+            return `
+              <div class="a-day-block">
+                <div class="a-day-head" onclick="toggleDay(this)">
+                  <div class="a-day-name">${dayLabel(day.ts)}, ${y}</div>
+                  <div class="a-day-meta">${done}/${day.items.length} done</div>
+                </div>
+                <div class="a-day-body">
+                  ${day.items.sort((a,b)=>a.created_at-b.created_at).map(i => `
+                    <div class="a-item">
+                      <span style="flex:1;${i.checked?'opacity:0.32;text-decoration:line-through':''}">${esc(i.text)}</span>
+                      <span class="a-badge ${i.checked?'done':'miss'}">${i.checked?'Done':'Missed'}</span>
+                    </div>`).join('')}
+                </div>
+              </div>`;
+          }).join('')}
+        `).join('')}
+      `).join('');
 
   const byDay = {};
-  (unchecked_archive || []).forEach(item => {
-    const d = new Date(item.created_at * 1000);
+  (unchecked_archive||[]).forEach(item => {
+    const d  = new Date(item.created_at * 1000);
     const dk = `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
     if (!byDay[dk]) byDay[dk] = { ts: item.created_at, items: [] };
     byDay[dk].items.push(item);
   });
 
   const uc = document.getElementById('a-unchecked');
-  if (!Object.keys(byDay).length) {
-    uc.innerHTML = '<div style="font-size:13px;opacity:0.32;padding:30px 0;font-weight:500">No unchecked archived items.</div>';
-  } else {
-    uc.innerHTML = Object.keys(byDay).sort().reverse().map(dk => {
-      const day = byDay[dk];
-      return `
-        <div class="uc-block">
-          <div class="uc-head">
-            <div class="uc-label">&#9888; ${dayLabel(day.ts)} — ${day.items.length} unchecked</div>
-          </div>
-          <div style="padding:10px 12px">
-            ${day.items.map(i => `
-              <div class="a-item">
-                <span style="flex:1">${esc(i.text)}</span>
-                <span class="a-badge miss">Missed</span>
-              </div>`).join('')}
-          </div>
-        </div>`;
-    }).join('');
-  }
-}
-
-function toggleDay(head) {
-  const body = head.nextElementSibling;
-  const open = body.classList.contains('is-open');
-  body.classList.toggle('is-open', !open);
-  head.classList.toggle('is-open', !open);
+  uc.innerHTML = !Object.keys(byDay).length
+    ? '<div style="font-size:13px;opacity:0.3;padding:28px 0;font-weight:500">No unchecked archived items.</div>'
+    : Object.keys(byDay).sort().reverse().map(dk => {
+        const day = byDay[dk];
+        return `
+          <div class="uc-block">
+            <div class="uc-head"><div class="uc-label">⚠ ${dayLabel(day.ts)} — ${day.items.length} unchecked</div></div>
+            <div style="padding:8px 12px">
+              ${day.items.map(i => `
+                <div class="a-item">
+                  <span style="flex:1">${esc(i.text)}</span>
+                  <span class="a-badge miss">Missed</span>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      }).join('');
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
