@@ -291,9 +291,6 @@ def get_tasks():
         tz_offset = 0
 
     today_start = local_day_start(client_now, tz_offset)
-    day1_start  = today_start - 86400
-    day2_start  = today_start - 172800
-    day3_start  = today_start - 259200
     archive_cut = server_now - (ARCHIVE_HOURS * 3600)
 
     with get_db() as conn:
@@ -302,13 +299,50 @@ def get_tasks():
             (user_id,)
         ).fetchall()
 
+    all_tasks = [row_to_dict(row) for row in rows]
+
+    # ── Find the 3 most recent local calendar days with any task activity,
+    #    excluding today. "Activity" = task was created on that day OR is
+    #    still live (not archived/expired) on that day.
+    #    We use created_at to assign each task to its local calendar day.
+    local_offset_secs = -tz_offset * 60
+
+    def task_local_day_start(ts: float) -> float:
+        """Return the UTC epoch of local midnight for the day containing ts."""
+        local_ts = ts + local_offset_secs
+        midnight  = (local_ts // 86400) * 86400
+        return midnight - local_offset_secs
+
+    # Collect distinct day-starts (excluding today) that have tasks
+    day_starts_with_tasks: set = set()
+    for t in all_tasks:
+        ds = task_local_day_start(t['created_at'])
+        if ds < today_start:          # exclude today
+            day_starts_with_tasks.add(ds)
+
+    # Sort descending → take the 3 most recent active days
+    active_day_starts = sorted(day_starts_with_tasks, reverse=True)[:3]
+
+    # Pad to exactly 3 slots (None = no-activity panel, renders as empty)
+    while len(active_day_starts) < 3:
+        active_day_starts.append(None)
+
+    panel_day_starts = active_day_starts   # [most-recent, 2nd, 3rd]
+
+    # ── Bucket every task ────────────────────────────────────────────────────
     buckets = {
-        'today': [], 'day1': [], 'day2': [], 'day3': [],
+        'today': [],
+        'day1': [], 'day2': [], 'day3': [],
         'archive': [], 'unchecked_archive': [],
     }
 
-    for row in rows:
-        t     = row_to_dict(row)
+    # Build a quick lookup: day_start → bucket key
+    panel_map = {}
+    for i, ds in enumerate(panel_day_starts):
+        if ds is not None:
+            panel_map[ds] = f'day{i+1}'
+
+    for t in all_tasks:
         ca    = t['created_at']
         age_h = (server_now - ca) / 3600
 
@@ -326,26 +360,28 @@ def get_tasks():
 
         if ca >= today_start:
             buckets['today'].append(t)
-        elif ca >= day1_start:
-            if not t['checked'] and age_h >= URGENT_HOURS:
-                t['urgent'] = True
-            buckets['day1'].append(t)
-        elif ca >= day2_start:
-            if not t['checked']:
-                t['urgent'] = True
-            buckets['day2'].append(t)
         else:
-            if not t['checked']:
-                t['urgent'] = True
-            buckets['day3'].append(t)
+            ds     = task_local_day_start(ca)
+            bucket = panel_map.get(ds)
+            if bucket:
+                if not t['checked'] and age_h >= URGENT_HOURS:
+                    t['urgent'] = True
+                buckets[bucket].append(t)
+            else:
+                # Older than the 3 active panels → archive treatment
+                if t['checked']:
+                    buckets['archive'].append(t)
+                else:
+                    t['urgent'] = True
+                    buckets['unchecked_archive'].append(t)
 
     return jsonify({
         'buckets': buckets,
         'panel_dates': {
             'today': today_start,
-            'day1':  day1_start,
-            'day2':  day2_start,
-            'day3':  day3_start,
+            'day1':  panel_day_starts[0],
+            'day2':  panel_day_starts[1],
+            'day3':  panel_day_starts[2],
         },
         'server_now': server_now,
     })
@@ -427,6 +463,30 @@ def delete_task():
         conn.execute('DELETE FROM tasks WHERE id=? AND user_id=?', (task_id, user_id))
         conn.commit()
     return jsonify({'deleted': task_id})
+
+
+@app.route('/archive-now', methods=['POST'])
+def archive_now():
+    """Immediately archive a task — skips the 5-minute countdown."""
+    data    = request.get_json(force=True)
+    task_id = data.get('id')
+    user_id = (data.get('user_id') or '').strip()
+    if not task_id:
+        return jsonify({'error': 'id required'}), 400
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+    with get_db() as conn:
+        row = conn.execute(
+            'SELECT id FROM tasks WHERE id=? AND user_id=?', (task_id, user_id)
+        ).fetchone()
+        if not row:
+            return jsonify({'error': 'not found'}), 404
+        conn.execute(
+            'UPDATE tasks SET archived=1, checked=1, checked_at=? WHERE id=? AND user_id=?',
+            (time.time(), task_id, user_id)
+        )
+        conn.commit()
+    return jsonify({'archived': task_id})
 
 
 # ── Email pipeline ────────────────────────────────────────────────────────────
@@ -627,19 +687,112 @@ def get_emails():
 
 
 # ── Scheduler ─────────────────────────────────────────────────────────────────
+# Tracks the last pipeline run so /status can report it.
+_pipeline_last_run: dict = {'ts': None, 'status': 'never run'}
 
-if SCHEDULER_AVAILABLE:
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(email_pipeline, 'interval', hours=3)
+def _tracked_email_pipeline():
+    """Wrapper that records run time and result for status reporting."""
+    _pipeline_last_run['ts']     = time.time()
+    _pipeline_last_run['status'] = 'running'
+    try:
+        email_pipeline()
+        _pipeline_last_run['status'] = 'ok'
+    except Exception as e:
+        _pipeline_last_run['status'] = f'error: {e}'
+        print(f"[scheduler] Pipeline error: {e}")
+
+
+def _start_scheduler():
+    """
+    Start APScheduler only in the real worker process.
+
+    Flask's debug mode spawns a reloader parent + a worker child.
+    WERKZEUG_RUN_MAIN is set to 'true' only in the worker, so we check
+    that flag to avoid running the scheduler twice in debug mode.
+    Under gunicorn / production there is no reloader, so the check
+    resolves to True and the scheduler starts normally.
+    """
+    if not SCHEDULER_AVAILABLE:
+        print("[scheduler] APScheduler not installed — email pipeline will not run automatically.")
+        print("[scheduler] Install it with:  pip install apscheduler")
+        return
+
+    import os
+    in_reloader_parent = (os.environ.get('WERKZEUG_RUN_MAIN') == 'false'
+                          or (os.environ.get('FLASK_DEBUG') and
+                              os.environ.get('WERKZEUG_RUN_MAIN') is None))
+
+    # Only skip if we are explicitly the reloader parent, not the worker
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'false':
+        print("[scheduler] Reloader parent process — skipping scheduler start.")
+        return
+
+    scheduler = BackgroundScheduler(
+        job_defaults={
+            'misfire_grace_time': 600,   # allow up to 10 min late if server was busy
+            'coalesce':           True,  # skip missed runs rather than pile up
+            'max_instances':      1,     # never run two pipeline jobs at once
+        }
+    )
+
+    scheduler.add_job(
+        _tracked_email_pipeline,
+        trigger='interval',
+        hours=3,
+        id='email_pipeline',
+        next_run_time=None,              # don't fire immediately on startup
+    )
+
     scheduler.start()
-    print("[scheduler] Email pipeline scheduled every 3 hours")
-else:
-    print("[scheduler] APScheduler not available — email pipeline will not run automatically")
+    print("[scheduler] APScheduler started — email pipeline runs every 3 hours.")
+    print("[scheduler] Manual trigger available at POST /run-now")
+
+    import atexit
+    atexit.register(lambda: scheduler.shutdown(wait=False))
+
+
+# ── Manual-trigger & status endpoints ────────────────────────────────────────
+
+@app.route('/run-now', methods=['POST'])
+def run_now():
+    """
+    Manually trigger the email pipeline immediately.
+    Useful for testing or forcing a fresh pull outside the 3-hour window.
+    Requires admin_password in the JSON body.
+    """
+    data = request.get_json(force=True) or {}
+    if data.get('admin_password') != ADMIN_PASSWORD:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        _tracked_email_pipeline()
+        return jsonify({
+            'status':   'ok',
+            'ran_at':   _pipeline_last_run['ts'],
+            'message':  'Pipeline completed successfully.',
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/pipeline-status', methods=['GET'])
+def pipeline_status():
+    """Return last run time and status of the email pipeline."""
+    return jsonify({
+        'last_run_ts': _pipeline_last_run['ts'],
+        'last_run_at': (
+            time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(_pipeline_last_run['ts']))
+            if _pipeline_last_run['ts'] else None
+        ),
+        'status':      _pipeline_last_run['status'],
+        'interval_h':  3,
+    })
 
 
 # ── Boot ──────────────────────────────────────────────────────────────────────
 
 init_db()
+_start_scheduler()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
