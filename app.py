@@ -33,7 +33,7 @@ OPENAI_API_KEY            = "sk-REPLACE_WITH_YOUR_OPENAI_API_KEY"   # <-- fill t
 ADMIN_PASSWORD            = "ADMIN321"
 AUTO_ARCHIVE_CHECKED_SECS = 300
 URGENT_HOURS              = 48
-ARCHIVE_HOURS             = 96
+ARCHIVE_HOURS             = 24
 EMAIL_LOOKBACK_MINS       = 180
 
 # ── Mailbox Map ───────────────────────────────────────────────────────────────
