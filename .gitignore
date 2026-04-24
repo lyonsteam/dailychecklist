@@ -1,4 +1,26 @@
-venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment — whatever it's named
+venv/
+env/
+.venv/
+.env/
+
+# Local database — never commit, Render uses Postgres
 tasks.db
+
+# Environment secrets
+.env
+*.env
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
