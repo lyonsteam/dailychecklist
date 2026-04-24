@@ -3,16 +3,16 @@ services:
     name: daily-tracker
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 1 --timeout 120
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: daily-tracker-db
           property: connectionString
       - key: OPENAI_API_KEY
-        sync: false          # set this manually in Render dashboard → Environment
+        sync: false        # set manually in Render dashboard → Environment
       - key: ADMIN_PASSWORD
-        sync: false          # set this manually in Render dashboard → Environment
+        sync: false        # set manually in Render dashboard → Environment
 
 databases:
   - name: daily-tracker-db
