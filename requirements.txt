@@ -1,4 +1,5 @@
 flask>=2.3.0
 gunicorn
+psycopg2-binary
 apscheduler
 openai
