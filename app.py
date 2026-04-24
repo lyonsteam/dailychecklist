@@ -793,12 +793,21 @@ def pipeline_status():
 
 
 # ── Boot ──────────────────────────────────────────────────────────────────────
+# Use Flask's before_request to init lazily on the first real request.
+# This avoids the DATABASE_URL-not-set crash that happens when gunicorn
+# imports the module before environment variables are fully injected.
 
-db_host = DATABASE_URL.split('@')[-1].split('/')[0] if DATABASE_URL else 'NOT SET'
-print(f"[db] Connecting to: {db_host}")
+_db_initialised = False
 
-init_db()
-_start_scheduler()
+@app.before_request
+def _lazy_init():
+    global _db_initialised
+    if not _db_initialised:
+        db_host = DATABASE_URL.split('@')[-1].split('/')[0] if DATABASE_URL else 'NOT SET'
+        print(f"[db] Connecting to: {db_host}")
+        init_db()
+        _start_scheduler()
+        _db_initialised = True
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
